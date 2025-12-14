@@ -3,6 +3,37 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import validator from 'validator';
 
+
+const vendorInfoSchema = new mongoose.Schema(
+  {
+    businessName: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Business name cannot exceed 100 characters'],
+    },
+    description: {
+      type: String,
+      maxlength: [1000, 'Description cannot exceed 1000 characters'],
+    },
+    website: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(
+            v
+          );
+        },
+        message: (props) => `${props.value} is not a valid website URL!`,
+      },
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false } // Prevent automatic _id for subdocument
+);
+
 const userSchema = new mongoose.Schema(
   {
     // Basic Information
@@ -56,6 +87,12 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'vendor', 'admin'],
       default: 'user',
     },
+    vendorInfo: {
+      type: vendorInfoSchema,
+      required: function() {
+        return this.role === 'vendor';
+      }
+    },
 
     // Profile Information
     avatar: {
@@ -63,7 +100,10 @@ const userSchema = new mongoose.Schema(
         type: String,
         default: '/images/default-avatar.png',
       },
-      public_id: String,
+      public_id: {
+        type: String,
+        default: 'default-avatar',
+      },
     },
     dateOfBirth: Date,
     gender: {
@@ -174,7 +214,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // Encrypt password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
@@ -183,7 +223,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Update changedPasswordAt property for the user
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000; // Ensure token is created after the password has been changed
   next();
@@ -195,9 +235,12 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
 };
 
 // Instance method to check if user changed password after the token was issued
-userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
-    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
     return JWTTimestamp < changedTimestamp;
   }
   return false;
@@ -211,7 +254,7 @@ userSchema.methods.getJwtToken = function () {
 };
 
 // Generate password reset token
-userSchema.methods.getResetPasswordToken = function() {
+userSchema.methods.getResetPasswordToken = function () {
   // Generate token
   const resetToken = crypto.randomBytes(20).toString('hex');
   // Hash and set to resetPasswordToken
@@ -225,7 +268,7 @@ userSchema.methods.getResetPasswordToken = function() {
 };
 
 // Generate email verification token
-userSchema.methods.getEmailVerificationToken = function() {
+userSchema.methods.getEmailVerificationToken = function () {
   // Generate token
   const verificationToken = crypto.randomBytes(20).toString('hex');
   // Hash and set to emailVerificationToken
@@ -239,7 +282,7 @@ userSchema.methods.getEmailVerificationToken = function() {
 };
 
 // Query middleware to filter out inactive users
-userSchema.pre(/^find/, function(next) {
+userSchema.pre(/^find/, function (next) {
   // this points to the current query
   this.find({ isActive: { $ne: false } });
   next();

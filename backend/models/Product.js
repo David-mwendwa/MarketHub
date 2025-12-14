@@ -29,18 +29,21 @@ const reviewSchema = new Schema(
   { timestamps: true }
 );
 
-const galleryImageSchema = new Schema({
-  full: {
-    type: String,
-    required: [true, 'Full size image URL is required'],
-    trim: true,
+const galleryImageSchema = new Schema(
+  {
+    full: {
+      type: String,
+      required: [true, 'Full size image URL is required'],
+      trim: true,
+    },
+    thumbnail: {
+      type: String,
+      required: [true, 'Thumbnail URL is required'],
+      trim: true,
+    },
   },
-  thumbnail: {
-    type: String,
-    required: [true, 'Thumbnail image URL is required'],
-    trim: true,
-  },
-});
+  { _id: false }
+);
 
 const breadcrumbSchema = new Schema({
   name: {
@@ -55,27 +58,45 @@ const breadcrumbSchema = new Schema({
   },
 });
 
-const configurableOptionValueSchema = new Schema({
-  valueIndex: {
-    type: String,
-    required: [true, 'Value index is required'],
-  },
-  label: {
-    type: String,
-    required: [true, 'Value label is required'],
-  },
-  inStock: [
-    {
-      type: String,
-      required: [true, 'At least one SKU is required for in-stock items'],
+const configurableOptionValueSchema = new Schema(
+  {
+    _id: {
+      type: Schema.Types.ObjectId,
+      default: () => new mongoose.Types.ObjectId(),
     },
-  ],
-});
+    valueIndex: {
+      type: String,
+      required: [true, 'Value index is required'],
+    },
+    label: {
+      type: String,
+      required: [true, 'Value label is required'],
+    },
+    value: {
+      type: String,
+      default: function () {
+        // If value is not provided, use the label in a URL-friendly format
+        return this.label ? this.label.toLowerCase().replace(/\s+/g, '-') : '';
+      },
+    },
+    inStock: {
+      type: [String],
+      default: [],
+      // Convert single value to array if needed
+      set: function (inStock) {
+        if (!inStock) return [];
+        return Array.isArray(inStock) ? inStock : [inStock];
+      },
+    },
+  },
+  { _id: true, strict: false } // Allow additional fields
+);
 
 const configurableOptionSchema = new Schema(
   {
-    id: {
-      type: String,
+    _id: {
+      type: Schema.Types.Mixed, // Can be String or ObjectId
+      default: () => new mongoose.Types.ObjectId(),
     },
     attributeId: {
       type: String,
@@ -86,13 +107,17 @@ const configurableOptionSchema = new Schema(
       required: [true, 'Option label is required'],
     },
     productId: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed, // Can be String or ObjectId
       ref: 'Product',
-      required: [true, 'Product ID is required'],
+      required: false, // Make it not required
     },
-    values: [configurableOptionValueSchema],
+    values: {
+      type: [configurableOptionValueSchema],
+      default: [],
+      required: true,
+    },
   },
-  { _id: true }
+  { _id: true, strict: false } // Allow additional fields
 );
 
 // SEO Schema
@@ -158,6 +183,18 @@ const productSchema = new Schema(
         'downloadable',
       ],
       default: 'simple',
+    },
+    category: {
+      type: String,
+      required: [true, 'Category is required'],
+      trim: true,
+      index: true,
+    },
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Vendor is required'],
+      index: true,
     },
     description: {
       type: String,

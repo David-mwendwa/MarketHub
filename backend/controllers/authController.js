@@ -25,16 +25,24 @@ export const registerUser = async (req, res) => {
   //   width: 150,
   //   crop: 'scale',
   // });
-  const { name, email, password } = req.body;
-  const user = await User.create({
-    name,
-    email,
-    password,
-    avatar: {
+  const { firstName, lastName, email, password, passwordConfirm } = req.body;
+
+  const userData = { ...req.body };
+
+  // Only add avatar if file was uploaded
+  if (req.file) {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'avatars',
+      width: 150,
+      crop: 'scale',
+    });
+    userData.avatar = {
       public_id: result.public_id,
       url: result.secure_url,
-    },
-  });
+    };
+  }
+
+  const user = await User.create(userData);
 
   //console.log({ user });
 
