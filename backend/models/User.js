@@ -2,80 +2,254 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import validator from 'validator';
-import crypto from 'crypto';
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please enter your name'],
-    maxlength: [30, 'Your name cannot exceed 30 Characters'],
-  },
-  email: {
-    type: String,
-    required: [true, 'Please enter your email'],
-    unique: true,
-    validate: [validator.isEmail, 'Please enter valid email address'],
-  },
-  password: {
-    type: String,
-    required: [true, 'Please enter your password'],
-    minlength: [6, 'Your password must be longer than 6 characters'],
-    select: false,
-  },
-  avatar: {
-    public_id: {
+const userSchema = new mongoose.Schema(
+  {
+    // Basic Information
+    firstName: {
       type: String,
-      required: true,
+      required: [true, 'Please enter your first name'],
+      trim: true,
+      maxlength: [30, 'First name cannot exceed 30 characters'],
     },
-    url: {
+    lastName: {
       type: String,
-      required: true,
+      required: [true, 'Please enter your last name'],
+      trim: true,
+      maxlength: [30, 'Last name cannot exceed 30 characters'],
     },
-  },
-  role: {
-    type: String,
-    default: 'user',
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  resetPasswordToken: String,
-  resetPasswordExpire: Date,
-});
+    email: {
+      type: String,
+      required: [true, 'Please enter your email'],
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, 'Please enter a valid email address'],
+    },
+    phone: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function (v) {
+          return /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s./0-9]*$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid phone number!`,
+      },
+    },
+    password: {
+      type: String,
+      required: [true, 'Please enter a password'],
+      minlength: [6, 'Password must be at least 6 characters long'],
+      select: false,
+    },
+    passwordConfirm: {
+      type: String,
+      required: [true, 'Please confirm your password'],
+      validate: {
+        validator: function (el) {
+          return el === this.password;
+        },
+        message: 'Passwords do not match!',
+      },
+    },
+    role: {
+      type: String,
+      enum: ['user', 'vendor', 'admin'],
+      default: 'user',
+    },
 
-// encrypting password before saving user;
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+    // Profile Information
+    avatar: {
+      url: {
+        type: String,
+        default: '/images/default-avatar.png',
+      },
+      public_id: String,
+    },
+    dateOfBirth: Date,
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other', 'prefer-not-to-say'],
+    },
+
+    // Addresses
+    addresses: [
+      {
+        type: {
+          type: String,
+          enum: ['home', 'work', 'other'],
+          default: 'home',
+        },
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+        firstName: String,
+        lastName: String,
+        company: String,
+        address1: String,
+        address2: String,
+        city: String,
+        state: String,
+        postalCode: String,
+        country: String,
+        phone: String,
+      },
+    ],
+
+    // Account Status
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isPhoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Social Logins
+    socialLogins: {
+      google: String,
+      facebook: String,
+      twitter: String,
+    },
+
+    // Preferences
+    preferences: {
+      newsletter: {
+        type: Boolean,
+        default: true,
+      },
+      marketing: {
+        type: Boolean,
+        default: false,
+      },
+      notifications: {
+        email: {
+          type: Boolean,
+          default: true,
+        },
+        sms: {
+          type: Boolean,
+          default: false,
+        },
+        push: {
+          type: Boolean,
+          default: true,
+        },
+      },
+      language: {
+        type: String,
+        default: 'en',
+      },
+      currency: {
+        type: String,
+        default: 'USD',
+      },
+    },
+
+    // Security
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    emailVerificationToken: String,
+    emailVerificationExpire: Date,
+    twoFactorAuth: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      secret: String,
+    },
+
+    // Timestamps
+    lastLogin: Date,
+    lastActivity: Date,
+  },
+  {
+    timestamps: true,
   }
-  this.password = await bcrypt.hash(this.password, 10);
+);
+
+// Encrypt password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  this.passwordConfirm = undefined;
+  next();
 });
 
-// compare user password
+// Update changedPasswordAt property for the user
+userSchema.pre('save', function(next) {
+  if (!this.isModified('password') || this.isNew) return next();
+  this.passwordChangedAt = Date.now() - 1000; // Ensure token is created after the password has been changed
+  next();
+});
+
+// Instance method to check if password is correct
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// return JWT token
+// Instance method to check if user changed password after the token was issued
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
+
+// Generate JWT token
 userSchema.methods.getJwtToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_LIFETIME,
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE,
   });
 };
 
-// generate password reset token
-userSchema.methods.getResetPasswordToken = function () {
-  // generate token
-  const resetToken = crypto.randomBytes(10).toString('hex');
-  // hash and set to resetPasswordToken
+// Generate password reset token
+userSchema.methods.getResetPasswordToken = function() {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  // Hash and set to resetPasswordToken
   this.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-  // set token expire time
+  // Set token expire time (30 minutes)
   this.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
   return resetToken;
 };
+
+// Generate email verification token
+userSchema.methods.getEmailVerificationToken = function() {
+  // Generate token
+  const verificationToken = crypto.randomBytes(20).toString('hex');
+  // Hash and set to emailVerificationToken
+  this.emailVerificationToken = crypto
+    .createHash('sha256')
+    .update(verificationToken)
+    .digest('hex');
+  // Set token expire time (24 hours)
+  this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+  return verificationToken;
+};
+
+// Query middleware to filter out inactive users
+userSchema.pre(/^find/, function(next) {
+  // this points to the current query
+  this.find({ isActive: { $ne: false } });
+  next();
+});
+
+// Add indexes for better query performance
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ 'socialLogins.google': 1 });
+userSchema.index({ 'socialLogins.facebook': 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ isActive: 1 });
 
 export default mongoose.model('User', userSchema);

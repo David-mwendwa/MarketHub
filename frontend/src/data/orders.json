@@ -1,0 +1,233 @@
+[
+  {
+    "id": "ORD-1001",
+    "customer": {
+      "id": "CUST-001",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+1234567890",
+      "address": {
+        "street": "123 Main St",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "postalCode": "00100"
+      }
+    },
+    "date": "2025-12-10T09:30:00Z",
+    "status": "completed",
+    "payment": {
+      "method": "mpesa",
+      "status": "paid",
+      "transactionId": "MPESA123456",
+      "amount": 12499.99
+    },
+    "items": [
+      {
+        "id": "PROD-001",
+        "name": "Wireless Earbuds Pro",
+        "price": 8999.99,
+        "quantity": 1,
+        "image": "/images/products/earbuds-pro.jpg"
+      },
+      {
+        "id": "PROD-002",
+        "name": "Phone Case",
+        "price": 1500.0,
+        "quantity": 2,
+        "image": "/images/products/phone-case.jpg"
+      }
+    ],
+    "subtotal": 11999.99,
+    "shipping": 500.0,
+    "tax": 0.0,
+    "total": 12499.99,
+    "notes": "Please deliver after 5 PM"
+  },
+  {
+    "id": "ORD-1002",
+    "customer": {
+      "id": "CUST-002",
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "phone": "+254712345678",
+      "address": {
+        "street": "456 Market St",
+        "city": "Mombasa",
+        "country": "Kenya",
+        "postalCode": "80100"
+      }
+    },
+    "date": "2025-12-11T14:15:00Z",
+    "status": "processing",
+    "payment": {
+      "method": "credit_card",
+      "status": "pending",
+      "transactionId": "CC987654",
+      "amount": 34999.99
+    },
+    "items": [
+      {
+        "id": "PROD-003",
+        "name": "Smartphone X",
+        "price": 34999.99,
+        "quantity": 1,
+        "image": "/images/products/smartphone-x.jpg"
+      }
+    ],
+    "subtotal": 34999.99,
+    "shipping": 0.0,
+    "tax": 0.0,
+    "total": 34999.99,
+    "notes": "Gift wrapping requested"
+  },
+  {
+    "id": "ORD-1003",
+    "customer": {
+      "id": "CUST-003",
+      "name": "Mike Johnson",
+      "email": "mike.j@example.com",
+      "phone": "+254700000001",
+      "address": {
+        "street": "789 Oak Ave",
+        "city": "Kisumu",
+        "country": "Kenya",
+        "postalCode": "40100"
+      }
+    },
+    "date": "2025-12-12T10:00:00Z",
+    "status": "pending",
+    "payment": {
+      "method": "bank_transfer",
+      "status": "pending",
+      "transactionId": null,
+      "amount": 12500.0
+    },
+    "items": [
+      {
+        "id": "PROD-004",
+        "name": "Bluetooth Speaker",
+        "price": 4500.0,
+        "quantity": 1,
+        "image": "/images/products/bluetooth-speaker.jpg"
+      },
+      {
+        "id": "PROD-005",
+        "name": "USB-C Cable",
+        "price": 1500.0,
+        "quantity": 2,
+        "image": "/images/products/usb-cable.jpg"
+      },
+      {
+        "id": "PROD-006",
+        "name": "Wireless Charger",
+        "price": 5000.0,
+        "quantity": 1,
+        "image": "/images/products/wireless-charger.jpg"
+      }
+    ],
+    "subtotal": 12500.0,
+    "shipping": 0.0,
+    "tax": 0.0,
+    "total": 12500.0,
+    "notes": "Please include an invoice"
+  },
+  {
+    "id": "ORD-1004",
+    "customer": {
+      "id": "CUST-004",
+      "name": "Sarah Williams",
+      "email": "sarah.w@example.com",
+      "phone": "+254722334455",
+      "address": {
+        "street": "101 Pine St",
+        "city": "Nakuru",
+        "country": "Kenya",
+        "postalCode": "20100"
+      }
+    },
+    "date": "2025-12-12T16:45:00Z",
+    "status": "shipped",
+    "payment": {
+      "method": "mpesa",
+      "status": "paid",
+      "transactionId": "MPESA789012",
+      "amount": 7500.0
+    },
+    "items": [
+      {
+        "id": "PROD-007",
+        "name": "Smart Watch",
+        "price": 7000.0,
+        "quantity": 1,
+        "image": "/images/products/smart-watch.jpg"
+      },
+      {
+        "id": "PROD-008",
+        "name": "Screen Protector",
+        "price": 500.0,
+        "quantity": 1,
+        "image": "/images/products/screen-protector.jpg"
+      }
+    ],
+    "subtotal": 7500.0,
+    "shipping": 0.0,
+    "tax": 0.0,
+    "total": 7500.0,
+    "notes": "Contact before delivery",
+    "trackingNumber": "TRK123456789",
+    "shippingProvider": "DHL"
+  },
+  {
+    "id": "ORD-1005",
+    "customer": {
+      "id": "CUST-005",
+      "name": "David Kimani",
+      "email": "david.k@example.com",
+      "phone": "+254733445566",
+      "address": {
+        "street": "222 River Rd",
+        "city": "Eldoret",
+        "country": "Kenya",
+        "postalCode": "30100"
+      }
+    },
+    "date": "2025-12-13T11:20:00Z",
+    "status": "cancelled",
+    "payment": {
+      "method": "credit_card",
+      "status": "refunded",
+      "transactionId": "CC456789",
+      "amount": 24999.99
+    },
+    "items": [
+      {
+        "id": "PROD-009",
+        "name": "Laptop Backpack",
+        "price": 4500.0,
+        "quantity": 1,
+        "image": "/images/products/laptop-backpack.jpg"
+      },
+      {
+        "id": "PROD-010",
+        "name": "Wireless Mouse",
+        "price": 2499.99,
+        "quantity": 1,
+        "image": "/images/products/wireless-mouse.jpg"
+      },
+      {
+        "id": "PROD-011",
+        "name": "Laptop Stand",
+        "price": 18000.0,
+        "quantity": 1,
+        "image": "/images/products/laptop-stand.jpg"
+      }
+    ],
+    "subtotal": 24999.99,
+    "shipping": 0.0,
+    "tax": 0.0,
+    "total": 24999.99,
+    "notes": "Order cancelled by customer",
+    "cancellationReason": "Changed my mind",
+    "cancelledAt": "2025-12-13T12:30:00Z"
+  }
+]

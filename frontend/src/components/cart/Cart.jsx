@@ -1,151 +1,110 @@
-import React, { Fragment } from 'react';
-import MetaData from '../layout/MetaData';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { addItemToCart, removeItemFromCart } from '../../actions/cartActions';
-import { cartImage2 } from './CartImage';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../ui/Button';
+import { ShoppingCart, X, ArrowLeft } from 'lucide-react';
+import CartItem from './CartItem';
+import { useCart } from '../../contexts/CartContext';
+import { formatCurrency } from '../../lib/utils';
 
-const Cart = () => {
+const Cart = ({ onClose, className, ...props }) => {
+  const { cartItems, cartTotal, itemCount, clearCart } = useCart();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { cartItems } = useSelector((state) => state.cart);
 
-  const increaseQty = (id, quantity, stock) => {
-    const newQty = quantity + 1;
-    if (newQty > stock) return;
-    dispatch(addItemToCart(id, newQty));
+  const handleCheckout = () => {
+    onClose?.();
+    navigate('/checkout');
   };
 
-  const decreaseQty = (id, quantity) => {
-    const newQty = quantity - 1;
-    if (newQty <= 0) return;
-    dispatch(addItemToCart(id, newQty));
+  const handleContinueShopping = () => {
+    onClose?.();
+    navigate('/shop');
   };
 
-  const removeCartItemHandler = (id) => {
-    dispatch(removeItemFromCart(id));
-  };
-
-  const checkoutHandler = () => {
-    navigate('/login?redirect=shipping');
-  };
+  if (itemCount === 0) {
+    return (
+      <div className={cn('flex flex-col items-center justify-center p-8 text-center', className)} {...props}>
+        <ShoppingCart className="h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          Your cart is empty
+        </h3>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
+          Looks like you haven't added anything to your cart yet.
+        </p>
+        <Button onClick={handleContinueShopping}>
+          Continue Shopping
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <Fragment>
-      <MetaData title={'Your Cart'} />
-      {!cartItems.length ? (
-        <h2 className='mt-5'>Your Cart is Empty</h2>
-      ) : (
-        <Fragment>
-          <h2 className='mt-5'>
-            Your Cart: <b>{cartItems.length} items</b>
-          </h2>
+    <div className={cn('flex flex-col h-full', className)} {...props}>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-4 sm:px-6">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+          Shopping Cart ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-500"
+        >
+          <X className="h-6 w-6" aria-hidden="true" />
+        </button>
+      </div>
 
-          <div className='row d-flex justify-content-between'>
-            <div className='col-12 col-lg-8'>
-              {cartItems.map((item) => (
-                <Fragment key={item.product}>
-                  <hr />
-                  <div className='cart-item' key={item.product}>
-                    <div className='row'>
-                      <div className='col-4 col-lg-3'>
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          height='90'
-                          width='115'
-                        />
-                      </div>
+      {/* Cart Items */}
+      <div className="flex-1 overflow-y-auto py-6 px-4 sm:px-6">
+        <div className="flow-root">
+          <ul className="-my-6 divide-y divide-gray-200 dark:divide-gray-700">
+            {cartItems.map((item) => (
+              <li key={item.id} className="py-6">
+                <CartItem item={item} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
-                      <div className='col-5 col-lg-3'>
-                        <Link to={`/products/${item.product}`}>
-                          {item.name}
-                        </Link>
-                      </div>
-
-                      <div className='col-4 col-lg-2 mt-4 mt-lg-0'>
-                        <p id='card_item_price'>${item.price}</p>
-                      </div>
-
-                      <div className='col-4 col-lg-3 mt-4 mt-lg-0'>
-                        <div className='stockCounter d-inline'>
-                          <span
-                            className='btn btn-danger minus'
-                            onClick={() =>
-                              decreaseQty(item.product, item.quantity)
-                            }>
-                            -
-                          </span>
-                          <input
-                            type='number'
-                            className='form-control count d-inline'
-                            value={item.quantity}
-                            readOnly
-                          />
-
-                          <span
-                            className='btn btn-primary plus'
-                            onClick={() =>
-                              increaseQty(item.product, item.quantity)
-                            }>
-                            +
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className='col-4 col-lg-1 mt-4 mt-lg-0'>
-                        <i
-                          id='delete_cart_item'
-                          className='fa fa-trash btn btn-danger'
-                          onClick={() =>
-                            removeCartItemHandler(item.product)
-                          }></i>
-                      </div>
-                    </div>
-                  </div>
-                </Fragment>
-              ))}
-
-              <hr />
-            </div>
-
-            <div className='col-12 col-lg-3 my-4'>
-              <div id='order_summary'>
-                <h4>Order Summary</h4>
-                <hr />
-                <p>
-                  Subtotal:{' '}
-                  <span className='order-summary-values'>
-                    {cartItems.reduce((acc, item) => acc + item.quantity, 0)}{' '}
-                    (Units)
-                  </span>
-                </p>
-                <p>
-                  Est. total:{' '}
-                  <span className='order-summary-values'>
-                    $
-                    {cartItems
-                      .reduce(
-                        (acc, item) => acc + item.quantity * item.price,
-                        0
-                      )
-                      .toFixed(2)}
-                  </span>
-                </p>
-
-                <hr />
-                <button
-                  id='checkout_btn'
-                  className='btn btn-primary btn-block'
-                  onClick={checkoutHandler}>
-                  Check out
-                </button>
-              </div>
-            </div>
-          </div>
-        </Fragment>
-      )}
-    </Fragment>
+      {/* Footer */}
+      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-6 sm:px-6">
+        <div className="flex justify-between text-base font-medium text-gray-900 dark:text-white mb-4">
+          <p>Subtotal</p>
+          <p>{formatCurrency(cartTotal)}</p>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Shipping and taxes calculated at checkout.
+        </p>
+        <div className="space-y-3">
+          <Button
+            onClick={handleCheckout}
+            className="w-full"
+          >
+            Checkout
+          </Button>
+          <Button
+            onClick={handleContinueShopping}
+            variant="outline"
+            className="w-full"
+            startIcon={<ArrowLeft className="h-4 w-4" />}
+          >
+            Continue Shopping
+          </Button>
+        </div>
+        <div className="mt-6 flex justify-center text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>
+            or{' '}
+            <button
+              type="button"
+              onClick={clearCart}
+              className="font-medium text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300"
+            >
+              Clear Cart
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 

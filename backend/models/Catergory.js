@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
-import slugify from 'slugify';
 
 const categorySchema = new Schema(
   {
@@ -9,7 +8,6 @@ const categorySchema = new Schema(
       type: String,
       required: [true, 'Category name is required'],
       trim: true,
-      maxlength: [100, 'Category name cannot exceed 100 characters'],
       unique: true,
       index: true,
     },
@@ -22,32 +20,24 @@ const categorySchema = new Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: [1000, 'Description cannot exceed 1000 characters'],
     },
-    shortDescription: {
-      type: String,
-      trim: true,
-      maxlength: [250, 'Short description cannot exceed 250 characters'],
-    },
-
-    // Hierarchy & Structure
     parent: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
       default: null,
-      index: true,
     },
-    ancestors: [
-      {
-        _id: {
-          type: Schema.Types.ObjectId,
-          ref: 'Category',
-          index: true,
-        },
-        name: String,
-        slug: String,
-      },
-    ],
+    image: {
+      url: String,
+      alt: String,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    displayOrder: {
+      type: Number,
+      default: 0,
+    },
     level: {
       type: Number,
       default: 0,

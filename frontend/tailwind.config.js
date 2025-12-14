@@ -1,76 +1,103 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+export default {
+  darkMode: ['class'],
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
+    fontFamily: {
+      sans: ['Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    },
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
     extend: {
+      keyframes: {
+        tilt: {
+          '0%, 100%': { transform: 'rotate(-5deg) translateY(0)' },
+          '50%': { transform: 'rotate(5deg) translateY(-5px)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+      animation: {
+        tilt: 'tilt 1.5s ease-in-out infinite',
+        float: 'float 4s ease-in-out infinite',
+      },
       colors: {
-        // Primary Colors
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: '#6C5CE7', // Modern indigo/purple for primary actions
-          light: '#7F6BFF',
-          dark: '#5D4BCC',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          50: '#f0f7ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
         secondary: {
-          DEFAULT: '#00CEC9', // Clean teal for accents
-          light: '#00E5DF',
-          dark: '#00A8A3',
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
         },
-        // Background Colors
-        background: {
-          light: '#F9FAFB', // Soft white/gray for app background
-          DEFAULT: '#FFFFFF', // Pure white for cards/containers
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
         },
-        // Text Colors
-        text: {
-          primary: '#111827', // Deep gray for main text
-          secondary: '#6B7280', // Medium gray for secondary text
-          muted: '#9CA3AF', // Muted text for less important info
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
         },
-        // UI Elements
-        border: {
-          DEFAULT: '#E5E7EB', // Light gray for borders/dividers
-          hover: '#D1D5DB', // Slightly darker on hover
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
-        // Status Colors
-        success: {
-          DEFAULT: '#10B981', // Green for success states
-          light: '#D1FAE5',
-          dark: '#047857',
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
         },
-        warning: {
-          DEFAULT: '#F59E0B', // Amber for warnings
-          light: '#FEF3C7',
-          dark: '#D97706',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
-        error: {
-          DEFAULT: '#EF4444', // Red for errors
-          light: '#FEE2E2',
-          dark: '#DC2626',
-        },
-        // Utility Colors
-        white: '#FFFFFF',
-        black: '#000000',
       },
-      fontFamily: {
-        sans: [
-          'Inter',
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'sans-serif',
-        ],
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
       },
-      // Extend other theme values if needed
-      boxShadow: {
-        card: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-        'card-hover':
-          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+      keyframes: {
+        'accordion-down': {
+          from: { height: 0 },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
 };

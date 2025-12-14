@@ -1,0 +1,722 @@
+{
+  "pageProps": {
+    "category": {
+      "categoryPage": {
+        "items": [
+          {
+            "id": 79013,
+            "sku": "DEVPlug62",
+            "name": "iPhone 14: 6.1'' - 6GB RAM - 128GB ROM - Midnight + Free (Cover + Screen Protector )",
+            "typeId": "simple",
+            "price": "93786",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_14_midnight_1.jpg",
+            "urlPath": "/iphone-14-6-1-6gb-ram-128gb-rom-l",
+            "maxPrice": null,
+            "specialPrice": "87696",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 11,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 5,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 79399,
+            "sku": "DEV10234",
+            "name": "Tecno Spark 10 5G : 6.6'' - 16GB RAM - 128GB ROM - Black",
+            "typeId": "simple",
+            "price": "20499",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/s/p/spark-10-frontt.png",
+            "urlPath": "/tecno-spark-10-5g-6-6-16gb-ram-128gb-rom-black",
+            "maxPrice": null,
+            "specialPrice": "20459",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 28,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": false,
+              "qty": 1,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 79877,
+            "sku": "DEVTru5",
+            "name": "Tecno Camon 20 Pro 5G : 6.67'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "51499",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno-camon-20-pro-5g-a.jpg",
+            "urlPath": "/tecno-camon-20-pro-5g-6-67-8gb-ram-256gb-rom-b",
+            "maxPrice": null,
+            "specialPrice": "51449",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 3,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 1,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 79937,
+            "sku": "DEVTru12-white",
+            "name": "Tecno Camon 30: 6.78'' - 256GB ROM - 8GB RAM (DUAL SIM) ",
+            "typeId": "simple",
+            "price": "36749",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno_camon_30_2_uyuni_salt_white.png",
+            "urlPath": "/tecno-camon-30-6-67-256gb-rom-8gb-ram-dual-sim-q",
+            "maxPrice": null,
+            "specialPrice": "29999",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 11,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 5,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 79939,
+            "sku": "DEVTru15",
+            "name": "Tecno CAMON 30 Premier 5G: 6.77'' - 12GB RAM - 512GB ROM - Dual SIM ",
+            "typeId": "simple",
+            "price": "74999",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno_camon_30.jpg",
+            "urlPath": "/tecno-camon-30-premier-5g-6-77-12gb-ram-512gb-rom-dual-sim",
+            "maxPrice": null,
+            "specialPrice": null,
+            "vendorName": null,
+            "rating": 0,
+            "likes": 9,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 2,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80038,
+            "sku": "DEV11858",
+            "name": "Tecno Camon 30 Pro 5G : 6.78'' - 12GB RAM - 512GB ROM ",
+            "typeId": "simple",
+            "price": "67999",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno-camon-30-pro-5g_1.jpg",
+            "urlPath": "/tecno-camon-30-pro-5g-6-78-12gb-ram-512gb-rom",
+            "maxPrice": null,
+            "specialPrice": "64999",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 0,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 1,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 78648,
+            "sku": "DEVPlug60",
+            "name": "iPhone 13 : 6.1\" - 128GB ROM - 4GB RAM ",
+            "typeId": "simple",
+            "price": "76369",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/a/p/apple_iphone_13_midnight.jpg",
+            "urlPath": "/iphone-13-6-1-128gb-rom-4gb-ram-w",
+            "maxPrice": null,
+            "specialPrice": "71862",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 15,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 4,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80075,
+            "sku": "DEVPlug64-black",
+            "name": "iPhone 15: 6.1'' - 6GB RAM - 128GB ROM - Black ",
+            "typeId": "simple",
+            "price": "105966",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_15_black_1.jpg",
+            "urlPath": "/iphone-15-6-1-6gb-ram-128gb-rom-black-e",
+            "maxPrice": null,
+            "specialPrice": "101703",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 12,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 3,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80076,
+            "sku": "DEVPlug64-green",
+            "name": "iPhone 15: 6.1'' - 6GB RAM - 128GB ROM - Green",
+            "typeId": "simple",
+            "price": "105966",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_15_green_1.jpg",
+            "urlPath": "/iphone-15-6-1-6gb-ram-128gb-rom-green",
+            "maxPrice": null,
+            "specialPrice": "101703",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 4,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 2,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80077,
+            "sku": "DEVPlug65-black",
+            "name": "iPhone 15: 6.1'' - 6GB RAM - 256GB ROM -black",
+            "typeId": "simple",
+            "price": "120582",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_15_black_1_1.jpg",
+            "urlPath": "/iphone-15-6-1-6gb-ram-256gb-rom-blue-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "117537",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 9,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 4,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80385,
+            "sku": "DEVTru41",
+            "name": "Tecno Phantom X2 5G: 6.8'' - 256GB ROM - 8GB RAM - Dual SIM ",
+            "typeId": "simple",
+            "price": "53499",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/6/1/61ei_fg6ujl._sl1280_.jpg",
+            "urlPath": "/tecno-phantom-x2-5g-6-8-256gb-rom-8gb-ram-dual-sim-t",
+            "maxPrice": null,
+            "specialPrice": "53499",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 4,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": false,
+              "qty": 1,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80406,
+            "sku": "DEV12524",
+            "name": "Neon Ultra 2: 6.75\" - 64GB ROM - 4GB RAM - Dual Sim",
+            "typeId": "simple",
+            "price": "9999",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/u/l/ultra-5.png",
+            "urlPath": "/neon-ultra-2-6-75-64gb-rom-4gb-ram-dual-sim",
+            "maxPrice": null,
+            "specialPrice": "8999",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 66,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 25,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80418,
+            "sku": "DEVTru46-green",
+            "name": "Tecno Phantom V Fold 2:12GB RAM-512GB ROM - Dual SIM + Free (Phantom V Pen)",
+            "typeId": "simple",
+            "price": "139999",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno-phantom-v-fold-2.jpg",
+            "urlPath": "/tecno-phantom-v-fold-2-12gb-ram-512gb-rom-y",
+            "maxPrice": null,
+            "specialPrice": "134999",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 2,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 1,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80419,
+            "sku": "DEVTru45",
+            "name": "TECNO Phantom V FLIP 2:6.9'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "84999",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/t/e/tecno-phantom-v-flip-2-a.jpg",
+            "urlPath": "/tecno-phantom-flip-2-6-9-8gb-ram-256gb-rom",
+            "maxPrice": null,
+            "specialPrice": "84499",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 1,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 3,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80511,
+            "sku": "DEVPlug241-black",
+            "name": "iPhone 16: 6.1'' - 8GB RAM - 128GB ROM",
+            "typeId": "simple",
+            "price": "119364",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_black_1.jpg",
+            "urlPath": "/iphone-16-6-1-8gb-ram-128gb-rom-black-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "114492",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 9,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 5,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80512,
+            "sku": "DEVPlug241-ultramarine",
+            "name": "iPhone 16: 6.1'' - 8GB RAM - 128GB ROM",
+            "typeId": "simple",
+            "price": "119364",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_ultramarine_1.jpg",
+            "urlPath": "/iphone-16-6-1-8gb-ram-128gb-rom-ultramarine-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "114492",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 9,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 20,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80513,
+            "sku": "DEVPlug242-black",
+            "name": "iPhone 16: 6.1'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "138852",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_black_1_2.jpg",
+            "urlPath": "/iphone-16-6-1-8gb-ram-256gb-rom-black-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "131544",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 11,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 2,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80514,
+            "sku": "DEVPlug242-ultramarine",
+            "name": "iPhone 16: 6.1'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "138852",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_ultramarine_1_2.jpg",
+            "urlPath": "/iphone-16-6-1-8gb-ram-256gb-rom-ultramarine-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "131544",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 3,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 2,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80532,
+            "sku": "DEVPlug244-desert",
+            "name": "iPhone 16 Pro: 6.3'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "174174",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_pro_desert_titanium_1_2.jpg",
+            "urlPath": "/iphone-16-pro-6-3-8gb-ram-256gb-rom-desert-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "168084",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 1,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 30,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          },
+          {
+            "id": 80533,
+            "sku": "DEVPlug244-natural",
+            "name": "iPhone 16 Pro: 6.3'' - 8GB RAM - 256GB ROM ",
+            "typeId": "simple",
+            "price": "174174",
+            "thumbnail": "https://assets.os.masoko.com/media/catalog/product/i/p/iphone_16_pro_natural_titanium_1_2.jpg",
+            "urlPath": "/iphone-16-pro-6-3-8gb-ram-256gb-rom-natural-free-cover-screen-protector",
+            "maxPrice": null,
+            "specialPrice": "168084",
+            "vendorName": null,
+            "rating": 0,
+            "likes": 4,
+            "deviceFinancing": 0,
+            "deviceInsuranceMode": null,
+            "deviceInsurancePercent": null,
+            "stock": {
+              "isInStock": true,
+              "qty": 30,
+              "__typename": "Stock"
+            },
+            "configurableOptions": [],
+            "campaign": [],
+            "__typename": "Product"
+          }
+        ],
+        "categoryBanners": [],
+        "urlPath": null,
+        "pagination": {
+          "currentPage": 1,
+          "totalCount": 150,
+          "pageSize": 20,
+          "nextPage": 2,
+          "__typename": "pagination"
+        },
+        "filters": [
+          {
+            "name": "Price",
+            "code": "price",
+            "items": [
+              {
+                "display": "min_price",
+                "value": 0,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "max_price",
+                "value": 389760,
+                "__typename": "FilterItems"
+              }
+            ],
+            "__typename": "ProductListingFilterItem"
+          },
+          {
+            "name": "Storage Capacity",
+            "code": "storage_capacity",
+            "items": [
+              {
+                "display": "128GB",
+                "value": 163,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "256GB",
+                "value": 164,
+                "__typename": "FilterItems"
+              }
+            ],
+            "__typename": "ProductListingFilterItem"
+          },
+          {
+            "name": "Camera Megapixel",
+            "code": "camera_megapixel",
+            "items": [
+              {
+                "display": "50MP",
+                "value": 1603,
+                "__typename": "FilterItems"
+              }
+            ],
+            "__typename": "ProductListingFilterItem"
+          },
+          {
+            "name": "Display Size",
+            "code": "display_size",
+            "items": [
+              {
+                "display": "6.1\"",
+                "value": 1446,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "6.6",
+                "value": 1570,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "6.7",
+                "value": 1557,
+                "__typename": "FilterItems"
+              }
+            ],
+            "__typename": "ProductListingFilterItem"
+          },
+          {
+            "name": "Brand",
+            "code": "brand",
+            "items": [
+              {
+                "display": "APPLE",
+                "value": 167,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "TECNO",
+                "value": 129,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "NEON",
+                "value": 1546,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "Realme",
+                "value": 1602,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "SAMSUNG",
+                "value": 130,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "INFINIX",
+                "value": 165,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "Xiaomi",
+                "value": 1258,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "PHILLIPS",
+                "value": 419,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "OPPO",
+                "value": 1212,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "VIVO",
+                "value": 1584,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "OnePlus",
+                "value": 640,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "Nintendo",
+                "value": 1535,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "Itel",
+                "value": 559,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "ZK TECO",
+                "value": 1528,
+                "__typename": "FilterItems"
+              },
+              {
+                "display": "NOTHING",
+                "value": 1622,
+                "__typename": "FilterItems"
+              }
+            ],
+            "__typename": "ProductListingFilterItem"
+          }
+        ],
+        "sortOrders": [
+          {
+            "display": "Select To Sort",
+            "value": "select_to_sort",
+            "sort_direction": "asc",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Price Ascending",
+            "value": "price",
+            "sort_direction": "ASC",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Price Descending",
+            "value": "price",
+            "sort_direction": "DESC",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Name Ascending",
+            "value": "name",
+            "sort_direction": "ASC",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Name Descending",
+            "value": "name",
+            "sort_direction": "DESC",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Special Price Ascending",
+            "value": "special_price",
+            "sort_direction": "ASC",
+            "__typename": "sortOrder"
+          },
+          {
+            "display": "Special Price Descending",
+            "value": "special_price",
+            "sort_direction": "DESC",
+            "__typename": "sortOrder"
+          }
+        ],
+        "seo": null,
+        "cmsPage": "",
+        "entityId": 1807,
+        "entityType": "category",
+        "name": "Mobile Phones",
+        "__typename": "CategoryPage"
+      }
+    }
+  },
+  "__N_SSP": true
+}

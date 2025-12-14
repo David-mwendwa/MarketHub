@@ -1,0 +1,90 @@
+[
+  {
+    "_id": "1",
+    "name": "Electronics",
+    "parentId": null,
+    "description": "Latest electronic devices and gadgets for all your tech needs",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 42,
+    "createdAt": "2023-01-15T10:30:00Z",
+    "updatedAt": "2023-10-20T14:45:00Z"
+  },
+  {
+    "_id": "2",
+    "name": "Clothing",
+    "parentId": null,
+    "description": "Fashionable clothing for all seasons and occasions",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 36,
+    "createdAt": "2023-02-10T09:15:00Z",
+    "updatedAt": "2023-10-15T11:20:00Z"
+  },
+  {
+    "_id": "3",
+    "name": "Home & Garden",
+    "parentId": null,
+    "description": "Everything you need to make your home beautiful and comfortable",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 28,
+    "createdAt": "2023-03-05T14:20:00Z",
+    "updatedAt": "2023-10-10T16:30:00Z"
+  },
+  {
+    "_id": "4",
+    "name": "Laptops",
+    "parentId": "1",
+    "description": "High-performance laptops for work, gaming, and entertainment",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 15,
+    "createdAt": "2023-04-12T11:45:00Z",
+    "updatedAt": "2023-10-18T09:15:00Z"
+  },
+  {
+    "_id": "5",
+    "name": "Smartphones",
+    "parentId": "1",
+    "description": "Latest smartphones with cutting-edge technology",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 27,
+    "createdAt": "2023-04-15T13:20:00Z",
+    "updatedAt": "2023-10-19T10:30:00Z"
+  },
+  {
+    "_id": "6",
+    "name": "Men's Clothing",
+    "parentId": "2",
+    "description": "Stylish and comfortable clothing for men",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 18,
+    "createdAt": "2023-05-20T10:15:00Z",
+    "updatedAt": "2023-10-17T14:45:00Z"
+  },
+  {
+    "_id": "7",
+    "name": "Women's Clothing",
+    "parentId": "2",
+    "description": "Trendy and elegant clothing for women",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 18,
+    "createdAt": "2023-05-22T09:30:00Z",
+    "updatedAt": "2023-10-16T11:20:00Z"
+  },
+  {
+    "_id": "8",
+    "name": "Furniture",
+    "parentId": "3",
+    "description": "Quality furniture to enhance your living space",
+    "status": "active",
+    "isFeatured": true,
+    "productCount": 28,
+    "createdAt": "2023-06-10T08:45:00Z",
+    "updatedAt": "2023-10-14T15:10:00Z"
+  }
+]

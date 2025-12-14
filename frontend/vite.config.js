@@ -1,33 +1,32 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.jsx?$/,
-    exclude: [],
+  resolve: {
+    alias: [
+      {
+        find: '@',
+        replacement: path.resolve(__dirname, 'src'),
+      },
+      {
+        find: '@components',
+        replacement: path.resolve(__dirname, 'src/components'),
+      },
+      {
+        find: '@pages',
+        replacement: path.resolve(__dirname, 'src/pages'),
+      },
+    ],
   },
   server: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5001',
-        changeOrigin: true,
-        secure: false,
-        ws: true,
-      },
+    fs: {
+      strict: true,
     },
   },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
-  },
-  resolve: {
-    extensions: ['.js', '.jsx', '.json'],
-    alias: {
-      '@': '/src',
-    },
+  optimizeDeps: {
+    include: ['@/components/**', '@/pages/**'],
   },
 });
