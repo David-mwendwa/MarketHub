@@ -16,10 +16,10 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 mongoose.set('strictQuery', false);
 
 // ---------------------------------------------------
-let CATEGORY = 'smartphones'
+let CATEGORY = 'accessories';
 // ---------------------------------------------------
 
-const seedSmartphones = async () => {
+const seedProducts = async () => {
   try {
     // Connect to MongoDB
     if (!process.env.MONGO_URI) {
@@ -38,36 +38,70 @@ const seedSmartphones = async () => {
     await mongoose.connect(DB, mongooseOptions);
     console.log('✅ MongoDB connection successful');
 
-    // Read the smartphones data file
+    // Read the products data file
     const data = await readFile(
-      path.join(__dirname, '../data/smartphones.json'),
+      path.join(__dirname, `../data/${CATEGORY}.json`),
       'utf-8'
     );
-
     const products = JSON.parse(data);
-
     // Remove all categories products first to prevent duplicates
-    await Product.deleteMany({ category: CATEGORY });
-    console.log(`Cleared existing ${CATEGORY} products`);
+    // await Product.deleteMany({ category: CATEGORY });
+    // console.log(`Cleared existing ${CATEGORY} products`);
+    // Process products in batches to avoid memory issues
+    const batchSize = 50;
+    let successCount = 0;
+    let duplicateCount = 0;
+    const duplicateUrls = new Set();
+    for (let i = 0; i < products.length; i += batchSize) {
+      const batch = products.slice(i, i + batchSize);
+      const batchToInsert = batch.map(({ id, ...rest }) => ({
+        ...rest,
+        category: CATEGORY,
+        vendor: '693ef1a59d48a0deb8755f56',
+      }));
+      try {
+        // Try to insert the batch
+        const result = await Product.insertMany(batchToInsert, {
+          ordered: false, // Continue on error
+        });
+        successCount += result.length;
+      } catch (error) {
+        if (error.code === 11000) {
+          // Handle duplicate key error
+          const duplicateErrors = error.writeErrors || [];
+          duplicateCount += duplicateErrors.length;
+          duplicateErrors.forEach((err) => {
+            if (err.errmsg) {
+              const urlMatch = err.errmsg.match(
+                /dup key: { urlPath: "([^"]+)" }/
+              );
+              if (urlMatch && urlMatch[1]) {
+                duplicateUrls.add(urlMatch[1]);
+              }
+            }
+          });
+          // Get the successfully inserted documents
+          const insertedCount = error.result?.insertedCount || 0;
+          successCount += insertedCount;
+        } else {
+          throw error; // Re-throw other errors
+        }
+      }
+    }
+    console.log(`\n✅ Seeding Summary for ${CATEGORY}:`);
+    console.log(`- Successfully inserted: ${successCount} products`);
+    console.log(`- Skipped duplicates: ${duplicateCount} products`);
 
-    // Remove id field from products to prevent duplicate key errors
-    const productsToInsert = products.map(({ id, ...rest }) => ({
-      ...rest,
-      category: CATEGORY,
-      vendor: '693ef1a59d48a0deb8755f56',
-    }));
+    if (duplicateUrls.size > 0) {
+      console.log('\n⚠️  Duplicate URLs found:');
+      duplicateUrls.forEach((url) => console.log(`  - ${url}`));
+    }
+    // Update configurable options for successfully inserted products
+    const insertedProducts = await Product.find({ category: CATEGORY });
+    console.log(`\nUpdating configurable options...`);
 
-    console.log(`Inserting ${CATEGORY} products...`);
-
-    // First insert all products
-    const result = await Product.insertMany(productsToInsert, {
-      ordered: false,
-    });
-
-    console.log(`Successfully seeded ${result.length} ${CATEGORY}`);
-
-    // Update configurable options with correct productId
-    for (const product of result) {
+    let updatedCount = 0;
+    for (const product of insertedProducts) {
       if (product.configurableOptions?.length > 0) {
         await Product.updateOne(
           { _id: product._id },
@@ -77,16 +111,16 @@ const seedSmartphones = async () => {
             },
           }
         );
-        console.log(`Updated configurable options for product ${product._id}`);
+        updatedCount++;
       }
     }
-
+    console.log(`✅ Updated configurable options for ${updatedCount} products`);
     // Close the connection
     await mongoose.connection.close();
-    console.log('✅ Database connection closed');
+    console.log('\n✅ Database connection closed');
     process.exit(0);
   } catch (error) {
-    console.error(`❌ Error seeding ${CATEGORY}:`, error.message);
+    console.error(`\n❌ Error seeding ${CATEGORY}:`, error.message);
     if (mongoose.connection.readyState === 1) {
       await mongoose.connection.close();
       console.log('✅ Database connection closed after error');
@@ -94,8 +128,7 @@ const seedSmartphones = async () => {
     process.exit(1);
   }
 };
-
-seedSmartphones().catch((error) => {
+seedProducts().catch((error) => {
   console.error(`Error in seeding ${CATEGORY}:`, error);
   process.exit(1);
 });
