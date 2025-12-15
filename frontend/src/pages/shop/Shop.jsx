@@ -5,15 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { productService } from '../../services/product';
 import ProductCard from '../../components/products/ProductCard';
 import ErrorBadge from '@/components/ui/ErrorBadge';
-import {
-  Filter,
-  Search,
-  X,
-  Sliders,
-  Star,
-  Tag,
-  Package,
-} from 'lucide-react';
+import { Filter, Search, X, Sliders, Star, Tag, Package } from 'lucide-react';
 import { debounce } from 'lodash';
 // Available categories and price ranges
 const categories = [
@@ -43,10 +35,14 @@ const ratings = [4, 3, 2, 1];
 
 const sortOptions = [
   { value: 'newest', label: 'Newest Arrivals' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'bestselling', label: 'Best Selling' },
+  { value: 'priceAsc', label: 'Price: Low to High' },
+  { value: 'priceDesc', label: 'Price: High to Low' },
+  { value: 'topRated', label: 'Highest Rated' },
+  { value: 'bestSelling', label: 'Best Selling' },
+  { value: 'mostPopular', label: 'Most Popular' },
+  { value: 'nameAsc', label: 'Name: A to Z' },
+  { value: 'nameDesc', label: 'Name: Z to A' },
+  { value: 'mostViewed', label: 'Most Viewed' },
 ];
 const Shop = () => {
   const [products, setProducts] = useState([]);

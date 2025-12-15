@@ -20,6 +20,7 @@ const ProductCard = ({ product, loading = false }) => {
     isOnSale,
     reviewCount = 0,
   } = product;
+  console.log({ product });
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -49,7 +50,19 @@ const ProductCard = ({ product, loading = false }) => {
     return <ProductCardSkeleton />;
   }
 
-  const productUrl = ROUTES.PRODUCT.replace(':id', id);
+  // Debug: Log the product data to check the ID
+  console.log('Product data:', { product, id });
+
+  // Get the ID from the most reliable source - prioritize _id as it's the MongoDB primary key
+  const productId = product._id || id || product.id;
+
+  if (!productId) {
+    console.error('Product ID is undefined', { product });
+    return null; // or handle the error appropriately
+  }
+
+  // Ensure the ID is a string for the URL
+  const productUrl = ROUTES.PRODUCT.replace(':id', String(productId));
 
   return (
     <div className='group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full'>

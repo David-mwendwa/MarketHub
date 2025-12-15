@@ -300,6 +300,7 @@ export const getProducts = async (req, res, next) => {
       nameDesc: '-name',
       bestSelling: '-soldCount',
       mostViewed: '-viewCount',
+      mostPopular: '-likes',
       topRated: '-rating.average',
     };
 
@@ -376,7 +377,9 @@ export const getAdminProducts = async (req, res) => {
 
 export const getSingleProduct = async (req, res) => {
   const { id: productId } = req.params;
+  console.log('Looking for product with ID:', productId);
   const product = await Product.findById(productId);
+  console.log('Found product:', product);
   if (!product) {
     throw new NotFoundError('product not found');
   }

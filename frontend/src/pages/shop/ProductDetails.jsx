@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -20,13 +20,18 @@ import {
   ShieldCheck,
   CreditCard,
   Info,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import WishlistButton from '../../components/common/WishlistButton';
 import ProductCard from '../../components/products/ProductCard';
+import { productsAPI } from '../../lib/api';
+import { toast } from 'react-hot-toast';
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -34,127 +39,111 @@ const ProductDetails = () => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [product, setProduct] = useState(null);
   const [successState, setSuccessState] = useState({
     show: false,
     message: '',
   });
+  console.log({ product });
 
-  // Enhanced mock product data
-  const product = {
-    id,
-    name: `Premium Wireless Headphones ${id}`,
-    brand: 'AudioPro',
-    price: 249.99,
-    originalPrice: 299.99,
-    rating: 4.7,
-    reviewCount: 215,
-    inStock: true,
-    sku: 'AUDIO-2023-001',
-    category: 'Electronics',
-    tags: ['wireless', 'bluetooth', 'noise-cancelling', 'over-ear'],
-    description:
-      'Experience crystal-clear sound with our premium wireless headphones. Featuring active noise cancellation, 30-hour battery life, and plush ear cushions for all-day comfort.',
-    features: [
-      'Active Noise Cancellation (ANC) technology',
-      '30-hour battery life with quick charge (5 min = 4 hours)',
-      'Bluetooth 5.0 with multipoint connectivity',
-      'Built-in microphone with voice assistant support',
-      'Foldable design with travel case included',
-    ],
-    specifications: {
-      Model: 'AudioPro X500',
-      Connectivity: 'Bluetooth 5.0, 3.5mm audio jack',
-      'Battery Life': 'Up to 30 hours (ANC on), 40 hours (ANC off)',
-      'Charging Time': '2.5 hours (full charge)',
-      Weight: '255g',
-      Warranty: '2 years manufacturer warranty',
-    },
-    details: [
-      'High-quality materials',
-      'Eco-friendly production',
-      '2-year warranty',
-      'Free returns within 30 days',
-      'Free shipping on all orders',
-      '24/7 customer support',
-    ],
-    images: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1572639512301-17080122e2a6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1504274066651-8d31a536b11a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80',
-    ],
-    colors: [
-      { name: 'Black', class: 'bg-gray-900', selectedClass: 'ring-gray-900' },
-      { name: 'Silver', class: 'bg-gray-300', selectedClass: 'ring-gray-400' },
-      { name: 'Blue', class: 'bg-blue-600', selectedClass: 'ring-blue-700' },
-    ],
-    sizes: [{ name: 'One Size', inStock: true }],
-    reviews: {
-      average: 4.7,
-      totalCount: 215,
-      featured: [
-        {
-          id: 1,
-          title: 'Amazing sound quality!',
-          rating: 5,
-          content:
-            'The sound quality is absolutely incredible. The noise cancellation works like a charm in noisy environments.',
-          author: 'Alex Johnson',
-          date: '2023-05-15',
-        },
-        {
-          id: 2,
-          title: 'Very comfortable',
-          rating: 4,
-          content:
-            'Great headphones overall. The ear cushions are super comfortable even after long hours of use.',
-          author: 'Sam Wilson',
-          date: '2023-06-22',
-        },
-      ],
-    },
-    relatedProducts: [
-      {
-        id: '2',
-        name: 'Wireless Earbuds Pro',
-        price: 179.99,
-        originalPrice: 219.99,
-        rating: 4.5,
-        reviewCount: 128,
-        image:
-          'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-        category: 'Electronics',
-        isNew: true,
-        isOnSale: true,
-      },
-      {
-        id: '3',
-        name: 'Bluetooth Speaker',
-        price: 129.99,
-        originalPrice: 159.99,
-        rating: 4.2,
-        reviewCount: 89,
-        image:
-          'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-        category: 'Audio',
-        isNew: false,
-        isOnSale: true,
-      },
-      {
-        id: '4',
-        name: 'Noise Cancelling Headphones',
-        price: 199.99,
-        originalPrice: 249.99,
-        rating: 4.8,
-        reviewCount: 215,
-        image:
-          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-        category: 'Headphones',
-        isNew: true,
-        isOnSale: true,
-      },
-    ],
-  };
+  // Fetch product data
+  const fetchProduct = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await productsAPI.getById(id);
+      if (response?.product) {
+        setProduct(response.product);
+
+        // Safely process gallery items
+        const items = Array.isArray(response.product.gallery)
+          ? response.product.gallery
+              .filter((item) => item) // Filter out any null/undefined items
+              .map((item) => ({
+                url:
+                  item.url || item.full || item.thumbnail || '/placeholder.jpg',
+                alt: response.product.name || 'Product image',
+              }))
+          : [];
+        // If no gallery items but we have a thumbnail, use that
+        if (items.length === 0 && response.product.thumbnail) {
+          items.push({
+            url: response.product.thumbnail,
+            alt: response.product.name || 'Product thumbnail',
+          });
+        }
+        // Ensure we have at least one image
+        if (items.length === 0) {
+          items.push({
+            url: '/placeholder.jpg',
+            alt: 'Product image not available',
+          });
+        }
+        setGalleryItems(items);
+        setError(null);
+      } else {
+        throw new Error('Product not found');
+      }
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      setError('Failed to load product. Please try again later.');
+      toast.error('Failed to load product details');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
+
+  // Call fetchProduct when component mounts or id changes
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
+
+  useEffect(() => {
+    if (product) {
+      console.log('Product data:', product);
+      console.log('Gallery items:', galleryItems);
+    }
+  }, [product, galleryItems]);
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <Loader2 className='w-8 h-8 animate-spin text-primary' />
+        <span className='ml-2'>Loading product details...</span>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-screen p-4 text-center'>
+        <AlertCircle className='w-12 h-12 text-red-500 mb-4' />
+        <h2 className='text-xl font-semibold mb-2'>Product Not Found</h2>
+        <p className='text-gray-600 dark:text-gray-300 mb-6'>
+          {error ||
+            'The product you are looking for does not exist or has been removed.'}
+        </p>
+        <Button onClick={() => navigate('/shop')}>
+          <ArrowLeft className='w-4 h-4 mr-2' />
+          Back to Shop
+        </Button>
+      </div>
+    );
+  }
 
   // Handle image zoom functionality
   const handleImageMouseMove = (e) => {
@@ -264,12 +253,9 @@ const ProductDetails = () => {
     handleAddToCart(validQuantity);
   };
 
-  // Format price with currency
+  // Format price with KSh
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
+    return `KSh ${Number(price).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   };
 
   // Render star rating
@@ -327,15 +313,20 @@ const ProductDetails = () => {
             onMouseMove={handleImageMouseMove}>
             <div className='aspect-w-1 aspect-h-1 w-full'>
               <img
-                src={product.images[selectedImage]}
+                src={
+                  product.gallery?.[selectedImage]?.url ||
+                  product.gallery?.[selectedImage]?.full ||
+                  product.gallery?.[selectedImage]?.thumbnail ||
+                  product.thumbnail ||
+                  '/placeholder.jpg'
+                }
                 alt={product.name}
                 className={`w-full h-full object-contain transition-transform duration-300 ${
                   isZoomed ? 'scale-150' : 'scale-100'
                 }`}
-                style={{
-                  transformOrigin: isZoomed
-                    ? `${zoomPosition.x}% ${zoomPosition.y}%`
-                    : 'center',
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  e.target.src = '/placeholder.jpg';
                 }}
               />
             </div>
@@ -356,33 +347,31 @@ const ProductDetails = () => {
           </div>
 
           {/* Image gallery */}
-          <div className='grid grid-cols-4 gap-3'>
-            {product.images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
-                  selectedImage === index
-                    ? 'border-primary-500 ring-2 ring-primary-500/30'
-                    : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                }`}>
-                <div className='aspect-w-1 aspect-h-1 w-full'>
-                  <img
-                    src={image}
-                    alt={`${product.name} - ${index + 1}`}
-                    className='w-full h-full object-cover'
-                  />
-                </div>
-                <div
-                  className={`absolute inset-0 bg-black/10 transition-opacity ${
+          {!isLoading && galleryItems.length > 0 && (
+            <div className='grid grid-cols-4 gap-3'>
+              {galleryItems.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
                     selectedImage === index
-                      ? 'opacity-0'
-                      : 'group-hover:opacity-30'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
+                      ? 'border-primary-500 ring-2 ring-primary-500/30'
+                      : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}>
+                  <div className='aspect-w-1 aspect-h-1 w-full'>
+                    <img
+                      src={image.url}
+                      alt={image.alt}
+                      className='w-full h-full object-cover'
+                      onError={(e) => {
+                        e.target.src = '/placeholder.jpg';
+                      }}
+                    />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -408,7 +397,7 @@ const ProductDetails = () => {
             <div className='flex items-center bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full'>
               {renderRating(product.rating)}
               <span className='ml-1.5 text-sm font-medium text-primary-700 dark:text-primary-300'>
-                {product.rating.toFixed(1)}
+                {product.rating.average?.toFixed(1) || '0.0'}
               </span>
             </div>
             <a
@@ -439,32 +428,27 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Description */}
-          <div className='prose dark:prose-invert max-w-none mb-8'>
-            <p className='text-gray-700 dark:text-gray-300'>
-              {product.description}
-            </p>
-          </div>
-
           {/* Color selection */}
-          <div className='mb-6'>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white mb-2'>
-              Color
-            </h3>
-            <div className='flex flex-wrap gap-2'>
-              {product.colors.map((color) => (
-                <button
-                  key={color.name}
-                  type='button'
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-offset-2 ${
-                    color.selectedClass
-                  }`}
-                  title={color.name}>
-                  <span className='sr-only'>{color.name}</span>
-                </button>
-              ))}
+          {product.colors && product.colors.length > 0 && (
+            <div className='mb-6'>
+              <h3 className='text-sm font-medium text-gray-900 dark:text-white mb-2'>
+                Color
+              </h3>
+              <div className='flex flex-wrap gap-2'>
+                {product.colors.map((color) => (
+                  <button
+                    key={color.name}
+                    type='button'
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-offset-2 ${
+                      color.selectedClass || ''
+                    }`}
+                    title={color.name}>
+                    <span className='sr-only'>{color.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Quantity and add to cart */}
           <div className='space-y-4 mb-8'>
@@ -594,11 +578,12 @@ const ProductDetails = () => {
               <ShieldCheck className='h-6 w-6 text-primary-500 mr-3 mt-0.5 flex-shrink-0' />
               <div>
                 <h3 className='font-medium text-gray-900 dark:text-white'>
-                  {product.specifications.Warranty || '1-Year Warranty'}
+                  {product.warranty || '1-Year Warranty'}
                 </h3>
                 <p className='text-sm text-gray-600 dark:text-gray-400'>
-                  We offer a {product.specifications.Warranty || '1-year'}{' '}
-                  warranty on all our products.
+                  {product.warranty
+                    ? `This product comes with a ${product.warranty}`
+                    : 'We offer a 1-year warranty on all our products.'}
                 </p>
               </div>
             </div>
@@ -656,60 +641,27 @@ const ProductDetails = () => {
         </div>
 
         <div className='py-8'>
-          {/* Description Tab */}
+          {/* Description Tab i.e http://localhost:5173/product/693ef6ef3123f379d3b7db72 */}
           {activeTab === 'description' && (
-            <div className='prose dark:prose-invert max-w-none'>
-              <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-4'>
-                Product Details
-              </h3>
-              <p className='text-gray-700 dark:text-gray-300 mb-6'>
-                {product.description}
-              </p>
-
-              <h4 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>
-                Features
-              </h4>
-              <ul className='space-y-2 mb-6'>
-                {product.features.map((feature, index) => (
-                  <li key={index} className='flex items-start'>
-                    <Check className='h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0' />
-                    <span className='text-gray-700 dark:text-gray-300'>
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className='bg-gray-50 dark:bg-gray-800/50 p-6 rounded-lg'>
-                <h4 className='text-lg font-medium text-gray-900 dark:text-white mb-3'>
-                  What's in the box?
-                </h4>
-                <ul className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
-                  <li className='flex items-center'>
-                    <Check className='h-4 w-4 text-green-500 mr-2' />
-                    <span className='text-gray-700 dark:text-gray-300'>
-                      {product.name}
-                    </span>
-                  </li>
-                  <li className='flex items-center'>
-                    <Check className='h-4 w-4 text-green-500 mr-2' />
-                    <span className='text-gray-700 dark:text-gray-300'>
-                      USB-C Charging Cable
-                    </span>
-                  </li>
-                  <li className='flex items-center'>
-                    <Check className='h-4 w-4 text-green-500 mr-2' />
-                    <span className='text-gray-700 dark:text-gray-300'>
-                      Travel Case
-                    </span>
-                  </li>
-                  <li className='flex items-center'>
-                    <Check className='h-4 w-4 text-green-500 mr-2' />
-                    <span className='text-gray-700 dark:text-gray-300'>
-                      User Manual
-                    </span>
-                  </li>
-                </ul>
+            <div className='space-y-6'>
+              <div className='bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg'>
+                <div className='px-4 py-5 sm:px-6'>
+                  <h3 className='text-lg font-medium leading-6 text-gray-900 dark:text-white'>
+                    Product Description
+                  </h3>
+                </div>
+                <div className='border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:p-6'>
+                  {product.description ? (
+                    <div
+                      className='prose prose-sm max-w-none text-gray-700 dark:text-gray-300'
+                      dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
+                  ) : (
+                    <p className='text-gray-500 dark:text-gray-400 italic'>
+                      No description available for this product.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -717,37 +669,30 @@ const ProductDetails = () => {
           {/* Specifications Tab */}
           {activeTab === 'specifications' && (
             <div className='space-y-6'>
-              <div>
-                <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-4'>
-                  Specifications
-                </h3>
-                <div className='bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg'>
-                  <div className='border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:p-0'>
-                    <dl className='sm:divide-y sm:divide-gray-200 dark:divide-gray-700'>
-                      {product.specifications ? (
-                        Object.entries(product.specifications).map(
-                          ([key, value]) => (
-                            <div
-                              key={key}
-                              className='py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6'>
-                              <dt className='text-sm font-medium text-gray-500 dark:text-gray-400'>
-                                {key}
-                              </dt>
-                              <dd className='mt-1 text-sm text-gray-900 dark:text-gray-200 sm:mt-0 sm:col-span-2'>
-                                {value}
-                              </dd>
-                            </div>
-                          )
-                        )
-                      ) : (
-                        <div className='py-4 text-center text-gray-500 dark:text-gray-400'>
-                          No specifications available for this product.
-                        </div>
-                      )}
-                    </dl>
-                  </div>
+              {/* Short Description Section */}
+              <div className='bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg'>
+                <div className='px-4 py-5 sm:px-6'>
+                  <h3 className='text-lg font-medium leading-6 text-gray-900 dark:text-white'>
+                    Product Overview
+                  </h3>
+                </div>
+                <div className='border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:p-6'>
+                  {product.shortDescription ? (
+                    <div
+                      className='prose prose-sm max-w-none text-gray-700 dark:text-gray-300'
+                      dangerouslySetInnerHTML={{
+                        __html: product.shortDescription,
+                      }}
+                    />
+                  ) : (
+                    <p className='text-gray-500 dark:text-gray-400 italic'>
+                      No description available for this product.
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Specifications Section */}
 
               <div className='bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-600 p-4 rounded-r'>
                 <div className='flex'>
@@ -771,16 +716,16 @@ const ProductDetails = () => {
           {/* Reviews Tab */}
           {activeTab === 'reviews' && (
             <div className='space-y-8'>
-              <div className='md:flex md:items-center md:justify-between'>
+              <div className='flex flex-col md:flex-row md:items-center md:justify-between mb-8'>
                 <div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
+                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white mb-1'>
                     Customer Reviews
                   </h3>
-                  <div className='flex items-center mt-1'>
-                    {renderRating(product.rating)}
-                    <p className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
-                      Based on {product.reviewCount} reviews
-                    </p>
+                  <div className='flex items-center'>
+                    {renderRating(product.rating?.average || 0)}
+                    <span className='ml-2 text-sm text-gray-600 dark:text-gray-300'>
+                      ({product.reviewCount || 0} reviews)
+                    </span>
                   </div>
                 </div>
                 <Button
@@ -789,104 +734,52 @@ const ProductDetails = () => {
                   onClick={() =>
                     document
                       .getElementById('review-form')
-                      .scrollIntoView({ behavior: 'smooth' })
+                      ?.scrollIntoView({ behavior: 'smooth' })
                   }>
                   Write a review
                 </Button>
               </div>
-
               <div className='space-y-8'>
-                {product.reviews.featured.map((review) => (
-                  <div
-                    key={review.id}
-                    className='border-b border-gray-200 dark:border-gray-700 pb-8'>
-                    <div className='flex items-center mb-2'>
-                      <div className='flex items-center'>
-                        {renderRating(review.rating)}
+                {product.reviews?.featured?.length > 0 ? (
+                  product.reviews.featured.map((review) => (
+                    <div
+                      key={review.id}
+                      className='border-b border-gray-200 dark:border-gray-700 pb-8'>
+                      <div className='flex items-center mb-2'>
+                        <div className='flex items-center'>
+                          {renderRating(review.rating)}
+                        </div>
+                        <span className='ml-2 text-sm font-medium text-gray-900 dark:text-white'>
+                          {review.title}
+                        </span>
                       </div>
-                      <span className='ml-2 text-sm font-medium text-gray-900 dark:text-white'>
-                        {review.title}
-                      </span>
+                      <p className='text-sm text-gray-600 dark:text-gray-300 mb-2'>
+                        {review.content}
+                      </p>
+                      <div className='flex items-center text-sm text-gray-500 dark:text-gray-400'>
+                        <span>{review.author}</span>
+                        <span className='mx-2'>•</span>
+                        <time dateTime={review.date}>
+                          {new Date(review.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </time>
+                      </div>
                     </div>
-                    <p className='text-sm text-gray-600 dark:text-gray-300 mb-2'>
-                      {review.content}
+                  ))
+                ) : (
+                  <div className='text-center py-12'>
+                    <MessageSquare className='h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4' />
+                    <h4 className='text-lg font-medium text-gray-900 dark:text-white mb-2'>
+                      No reviews yet
+                    </h4>
+                    <p className='text-gray-500 dark:text-gray-400 mb-6'>
+                      Be the first to review this product!
                     </p>
-                    <div className='flex items-center text-sm text-gray-500 dark:text-gray-400'>
-                      <span>{review.author}</span>
-                      <span className='mx-2'>•</span>
-                      <time dateTime={review.date}>
-                        {new Date(review.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </time>
-                    </div>
                   </div>
-                ))}
-              </div>
-
-              <div id='review-form' className='pt-8'>
-                <h4 className='text-lg font-medium text-gray-900 dark:text-white mb-4'>
-                  Write a review
-                </h4>
-                <div className='bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700'>
-                  <form className='space-y-6'>
-                    <div>
-                      <label
-                        htmlFor='rating'
-                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        Your rating
-                      </label>
-                      <div className='flex items-center space-x-1'>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`h-6 w-6 cursor-pointer ${
-                              star <= 5
-                                ? 'text-yellow-400'
-                                : 'text-gray-300 dark:text-gray-600'
-                            }`}
-                            fill={star <= 5 ? 'currentColor' : 'none'}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor='title'
-                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        Review title
-                      </label>
-                      <input
-                        type='text'
-                        id='title'
-                        className='w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500'
-                        placeholder='Summarize your review in a few words'
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor='review'
-                        className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                        Your review
-                      </label>
-                      <textarea
-                        id='review'
-                        rows={4}
-                        className='w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500'
-                        placeholder='Share your experience with this product'
-                        defaultValue={''}
-                      />
-                    </div>
-
-                    <div className='flex items-center justify-end'>
-                      <Button type='submit'>Submit review</Button>
-                    </div>
-                  </form>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -894,22 +787,24 @@ const ProductDetails = () => {
       </div>
 
       {/* Related Products */}
-      <section className='mt-16'>
-        <div className='flex items-center justify-between mb-6'>
-          <h2 className='text-2xl font-bold text-gray-900 dark:text-white'>
-            You may also like
-          </h2>
-          <Button variant='outline' size='sm' as={Link} to='/shop'>
-            View all
-          </Button>
-        </div>
+      {product.relatedProducts?.length > 0 && (
+        <section className='mt-16'>
+          <div className='flex items-center justify-between mb-6'>
+            <h2 className='text-2xl font-bold text-gray-900 dark:text-white'>
+              You may also like
+            </h2>
+            <Button variant='outline' size='sm' as={Link} to='/shop'>
+              View all
+            </Button>
+          </div>
 
-        <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
-          {product.relatedProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+            {product.relatedProducts.map((relatedProduct) => (
+              <ProductCard key={relatedProduct.id} product={relatedProduct} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
