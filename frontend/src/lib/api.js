@@ -1,0 +1,113 @@
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      if (status === 401) {
+        // Handle unauthorized - token expired or invalid
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        toast.error('Session expired. Please log in again.');
+      } else if (status === 403) {
+        toast.error('You do not have permission to perform this action.');
+      } else if (status === 404) {
+        toast.error('The requested resource was not found.');
+      } else if (status >= 500) {
+        toast.error('Server error. Please try again later.');
+      } else if (data && data.message) {
+        toast.error(data.message);
+      } else {
+        toast.error('An error occurred. Please try again.');
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      toast.error('Network error. Please check your connection.');
+    } else {
+      // Something happened in setting up the request
+      toast.error('An error occurred. Please try again.');
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API endpoints
+export const authAPI = {
+  login: (email, password) =>
+    api.post('/auth/login', { email, password }).then((res) => res.data),
+  register: (userData) =>
+    api.post('/auth/register', userData).then((res) => res.data),
+  getMe: () => api.get('/auth/me').then((res) => res.data),
+  logout: () => api.post('/auth/logout').then((res) => res.data),
+  refreshToken: () => api.post('/auth/refresh-token').then((res) => res.data),
+};
+
+// Products API endpoints
+export const productsAPI = {
+  getAll: (params = {}) =>
+    api.get('/products', { params }).then((res) => res.data),
+  getById: (id) => api.get(`/products/${id}`).then((res) => res.data),
+  getByCategory: (categoryId, params = {}) =>
+    api
+      .get(`/products/category/${categoryId}`, { params })
+      .then((res) => res.data),
+  search: (query, params = {}) =>
+    api
+      .get('/products/search', { params: { q: query, ...params } })
+      .then((res) => res.data),
+  getFeatured: () => api.get('/products/featured').then((res) => res.data),
+  getRelated: (productId) =>
+    api.get(`/products/${productId}/related`).then((res) => res.data),
+  create: (productData) =>
+    api.post('/products', productData).then((res) => res.data),
+  update: (id, productData) =>
+    api.put(`/products/${id}`, productData).then((res) => res.data),
+  delete: (id) => api.delete(`/products/${id}`).then((res) => res.data),
+};
+
+// Categories API endpoints
+export const categoriesAPI = {
+  getAll: () => api.get('/categories').then((res) => res.data),
+  getById: (id) => api.get(`/categories/${id}`).then((res) => res.data),
+};
+
+// Users API endpoints
+export const usersAPI = {
+  getProfile: () => api.get('/users/me').then((res) => res.data),
+  updateProfile: (userData) =>
+    api.put('/users/me', userData).then((res) => res.data),
+  changePassword: (currentPassword, newPassword) =>
+    api
+      .post('/users/change-password', { currentPassword, newPassword })
+      .then((res) => res.data),
+};
+
+// Export the configured axios instance
+export default api;

@@ -14,7 +14,7 @@ const ProductCard = ({ product, loading = false }) => {
     price,
     originalPrice,
     rating = 0,
-    image,
+    thumbnail,
     category = 'Electronics',
     isNew,
     isOnSale,
@@ -53,16 +53,28 @@ const ProductCard = ({ product, loading = false }) => {
 
   return (
     <div className='group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full'>
-      <Link to={productUrl} className='block'>
+      <Link
+        to={productUrl}
+        className='block group-hover:shadow-inner transition-all duration-300 bg-white'>
         {/* Product Image */}
-        <div className='relative overflow-hidden aspect-square'>
-          <div className='absolute inset-0 bg-gradient-to-b from-transparent to-black/10 dark:to-black/20 z-10 group-hover:opacity-0 transition-opacity duration-300' />
-          <img
-            src={image}
-            alt={name}
-            className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
-            loading='lazy'
-          />
+        <div className='relative h-56 w-full flex items-center justify-center p-2 bg-white'>
+          {/* Hover overlay */}
+          <div className='absolute inset-0 bg-gradient-to-b from-transparent to-black/5 dark:to-black/10 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+
+          {/* Main image */}
+          <div className='relative w-full h-full flex items-center justify-center p-4'>
+            <img
+              src={thumbnail}
+              alt={name}
+              className='max-h-[180px] w-auto h-auto object-contain transition-transform duration-300 group-hover:scale-105'
+              loading='lazy'
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src =
+                  'https://via.placeholder.com/300x300?text=Image+Not+Available';
+              }}
+            />
+          </div>
 
           {/* Badges */}
           <div className='absolute top-4 right-4 flex flex-col space-y-2'>
@@ -121,8 +133,8 @@ const ProductCard = ({ product, loading = false }) => {
           </div>
         </div>
 
-        <Link to={productUrl} className='group/title'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 mb-4 group-hover/title:text-primary-600 dark:group-hover/title:text-primary-400 transition-colors'>
+        <Link to={productUrl} className='group/title block'>
+          <h3 className='text-base font-medium text-gray-900 dark:text-white line-clamp-2 mb-3 group-hover/title:text-primary-600 dark:group-hover/title:text-primary-400 transition-colors leading-tight min-h-[2.5rem]'>
             {name}
           </h3>
         </Link>

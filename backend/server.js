@@ -41,7 +41,7 @@ app.set('trust proxy', 1); // trust first proxy (Render)
 // Enable CORS
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'https://markethub.netlify.app'],
+    origin: ['http://localhost:5173', 'https://markethub.netlify.app'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -115,8 +115,8 @@ const apiLimiter = rateLimit({
   skip: (req) => req.path.startsWith('/api/health'),
 });
 
-app.use('/api', apiLimiter);
-app.use('/api/v1/auth', authLimiter);
+// app.use('/api', apiLimiter);
+// app.use('/api/v1/auth', authLimiter);
 
 // =====================
 // ROUTES

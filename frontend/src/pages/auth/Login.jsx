@@ -17,20 +17,23 @@ import toast from 'react-hot-toast';
 
 // Test credentials for different user roles
 const TEST_CREDENTIALS = {
-  buyer: {
-    email: 'buyer@example.com',
-    password: 'password123',
-    name: 'John Buyer',
-  },
-  seller: {
-    email: 'seller@example.com',
-    password: 'password123',
-    name: 'Sarah Seller',
-  },
   admin: {
-    email: 'admin@example.com',
-    password: 'admin123',
-    name: 'Admin User',
+    firstName: 'Admin',
+    lastName: 'User',
+    email: 'admin@marketplace.test',
+    password: 'Admin@123',
+  },
+  vendor: {
+    firstName: 'Premium',
+    lastName: 'Vendor',
+    email: 'vendor@marketplace.test',
+    password: 'Vendor@123',
+  },
+  user: {
+    firstName: 'Default',
+    lastName: 'User',
+    email: 'user@marketplace.test',
+    password: 'User@123',
   },
 };
 
@@ -53,6 +56,10 @@ const Login = () => {
 
   const handleRoleSelect = (role) => {
     const credentials = TEST_CREDENTIALS[role];
+    if (!credentials) {
+      console.error(`No credentials found for role: ${role}`);
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       role,
@@ -217,42 +224,44 @@ const Login = () => {
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   className='mt-2 space-y-2 overflow-hidden'>
-                  {['buyer', 'seller', 'admin'].map((role) => (
-                    <div
-                      key={role}
-                      className={`p-3 rounded-lg cursor-pointer ${
-                        formData.role === role
-                          ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
-                          : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                      onClick={() => handleRoleSelect(role)}>
-                      <div className='flex items-center w-full justify-between'>
-                        <div className='flex items-center'>
-                          <div
-                            className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
-                              formData.role === role
-                                ? 'border-primary-500 bg-primary-500'
-                                : 'border-gray-300 dark:border-gray-600'
-                            }`}>
-                            {formData.role === role && (
-                              <div className='w-2.5 h-2.5 rounded-full bg-white' />
-                            )}
-                          </div>
-                          <div>
-                            <div className='text-sm font-medium text-gray-700 dark:text-gray-300 capitalize'>
-                              {role}
+                  {Object.entries(TEST_CREDENTIALS).map(
+                    ([role, credential]) => (
+                      <div
+                        key={role}
+                        className={`p-3 rounded-lg cursor-pointer ${
+                          formData.role === role
+                            ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+                            : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                        onClick={() => handleRoleSelect(role)}>
+                        <div className='flex items-center w-full justify-between'>
+                          <div className='flex items-center'>
+                            <div
+                              className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                                formData.role === role
+                                  ? 'border-primary-500 bg-primary-500'
+                                  : 'border-gray-300 dark:border-gray-600'
+                              }`}>
+                              {formData.role === role && (
+                                <div className='w-2.5 h-2.5 rounded-full bg-white' />
+                              )}
                             </div>
-                            <div className='text-xs text-gray-500 dark:text-gray-400'>
-                              {TEST_CREDENTIALS[role].email}
+                            <div>
+                              <div className='text-sm font-medium text-gray-700 dark:text-gray-300 capitalize'>
+                                {role}
+                              </div>
+                              <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                {credential.email}
+                              </div>
                             </div>
                           </div>
+                          <span className='text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50'>
+                            Auto-fill Test Credentials
+                          </span>
                         </div>
-                        <span className='text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50'>
-                          Auto-fill Test Credentials
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </motion.div>
               )}
             </div>
