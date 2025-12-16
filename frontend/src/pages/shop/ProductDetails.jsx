@@ -23,18 +23,28 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { useCart } from '../../contexts/CartContext';
+
 import WishlistButton from '../../components/common/WishlistButton';
 import ProductCard from '../../components/products/ProductCard';
 import { productsAPI } from '../../lib/api';
 import { toast } from 'react-hot-toast';
+import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    isInCart,
+    updateQuantity,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
@@ -47,40 +57,47 @@ const ProductDetails = () => {
     show: false,
     message: '',
   });
-  console.log({ product });
 
   // Fetch product data
   const fetchProduct = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await productsAPI.getById(id);
+
       if (response?.product) {
-        setProduct(response.product);
+        const completeProduct = {
+          ...response.product,
+          _id: response.product._id || id,
+        };
+
+        setProduct(completeProduct);
 
         // Safely process gallery items
-        const items = Array.isArray(response.product.gallery)
-          ? response.product.gallery
-              .filter((item) => item) // Filter out any null/undefined items
+        const items = Array.isArray(completeProduct.gallery)
+          ? completeProduct.gallery
+              .filter((item) => item)
               .map((item) => ({
                 url:
                   item.url || item.full || item.thumbnail || '/placeholder.jpg',
-                alt: response.product.name || 'Product image',
+                alt: completeProduct.name || 'Product image',
               }))
           : [];
-        // If no gallery items but we have a thumbnail, use that
-        if (items.length === 0 && response.product.thumbnail) {
+
+        // Rest of your gallery items handling...
+        if (items.length === 0 && completeProduct.thumbnail) {
           items.push({
-            url: response.product.thumbnail,
-            alt: response.product.name || 'Product thumbnail',
+            url: completeProduct.thumbnail,
+            alt: completeProduct.name || 'Product thumbnail',
           });
         }
-        // Ensure we have at least one image
+
         if (items.length === 0) {
           items.push({
             url: '/placeholder.jpg',
             alt: 'Product image not available',
           });
         }
+
         setGalleryItems(items);
         setError(null);
       } else {
@@ -94,16 +111,6 @@ const ProductDetails = () => {
       setIsLoading(false);
     }
   }, [id]);
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id, fetchProduct]);
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id, fetchProduct]);
 
   // Call fetchProduct when component mounts or id changes
   useEffect(() => {
@@ -157,14 +164,44 @@ const ProductDetails = () => {
   };
 
   // Handle wishlist success message
-  const handleWishlistUpdate = (isAdded, productName) => {
-    setSuccessState({
-      show: true,
-      message: isAdded
-        ? `Added ${productName} to your wishlist!`
-        : `Removed ${productName} from your wishlist!`,
-    });
-    setTimeout(() => setSuccessState({ show: false, message: '' }), 2000);
+  const handleWishlistUpdate = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (!product || !product._id) {
+      console.error('Product or product ID is missing');
+      return;
+    }
+
+    try {
+      if (isInWishlist(product._id)) {
+        removeFromWishlist(product._id);
+        toast.success(`Removed ${product.name} from your wishlist!`, {
+          position: 'bottom-right',
+        });
+      } else {
+        addToWishlist({
+          _id: product._id,
+          name: product.name,
+          price: parseFloat(product.price) || 0,
+          image:
+            product.thumbnail ||
+            (Array.isArray(product.gallery) && product.gallery[0]?.thumbnail) ||
+            '/placeholder-product.jpg',
+          sku: product.sku,
+          stock: product.stock?.qty || 0,
+          // Include any other necessary product fields
+          ...product,
+        });
+        toast.success(`Added ${product.name} to your wishlist!`, {
+          position: 'bottom-right',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+      toast.error('Failed to update wishlist. Please try again.', {
+        position: 'bottom-right',
+      });
+    }
   };
 
   // Share product
@@ -197,60 +234,49 @@ const ProductDetails = () => {
 
   // Handle adding product to cart with animation
   const handleAddToCart = (qty) => {
-    // If qty is an event object (from direct click), use the current quantity
-    if (qty && typeof qty === 'object' && qty.nativeEvent) {
-      qty = quantity;
-    } else {
-      // Ensure qty is a number, default to 1 if not
-      qty = typeof qty === 'number' ? qty : 1;
-    }
-
-    // Check if product is valid
-    if (!product || typeof product !== 'object') {
-      return;
-    }
-
-    // Safely access product properties with fallbacks
-    const productName = product.name || 'Product';
-    const productId = product.id || '';
-    const productPrice = product.price || 0;
-    const productImage =
-      Array.isArray(product.images) && product.images.length > 0
-        ? product.images[0]
-        : '';
-
-    const cartItem = {
-      id: productId,
-      name: productName,
-      price: productPrice,
-      image: productImage,
-      quantity: qty,
-    };
-
-    // Add to cart
     try {
-      addToCart(cartItem);
+      if (!product) {
+        toast.error('Product not available');
+        return;
+      }
 
-      // Create success message with the product name
-      const itemText = qty > 1 ? 'items' : 'item';
-      const successMessage = `Added ${qty} ${itemText} of ${productName} to the cart`;
+      const finalQuantity = qty?.nativeEvent
+        ? 1
+        : Math.max(1, Number(qty) || 1);
 
-      setSuccessState({
-        show: true,
-        message: successMessage,
+      // Check if item is already in cart
+      const existingCartItem = cartItems?.find(
+        (item) => item._id === product._id
+      );
+
+      if (existingCartItem) {
+        toast.info('Item is already in your cart', {
+          position: 'bottom-right',
+        });
+        return;
+      }
+
+      // Add new item with quantity 1
+      addToCart({
+        _id: product._id,
+        name: product.name,
+        price: parseFloat(product.price) || 0,
+        quantity: 1, // Always add 1 initially
+        image:
+          product.thumbnail ||
+          (Array.isArray(product.gallery) && product.gallery[0]?.thumbnail) ||
+          '/placeholder-product.jpg',
+        sku: product.sku,
+        stock: product.stock?.qty || 0,
       });
 
-      setTimeout(() => setSuccessState({ show: false, message: '' }), 2000);
+      toast.success(`${product.name} added to cart`, {
+        position: 'bottom-right',
+      });
     } catch (error) {
-      // Silent error handling
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
     }
-  };
-
-  // Handle quantity change
-  const updateQuantity = (newQuantity) => {
-    const validQuantity = Math.max(1, newQuantity);
-    setQuantity(validQuantity);
-    handleAddToCart(validQuantity);
   };
 
   // Format price with KSh
@@ -341,6 +367,7 @@ const ProductDetails = () => {
               <WishlistButton
                 product={product}
                 className='bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700/90'
+                isActive={isInWishlist(product?._id || '')}
                 onWishlistUpdate={handleWishlistUpdate}
               />
             </div>
@@ -382,8 +409,13 @@ const ProductDetails = () => {
             <span className='h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
             <span>SKU: {product.sku}</span>
             <span className='h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600'></span>
-            <span className='text-green-600 dark:text-green-400 font-medium'>
-              In Stock
+            <span
+              className={
+                product.stock?.qty > 0
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400'
+              }>
+              {product.stock?.qty > 0 ? 'In Stock' : 'Out of Stock'}
             </span>
           </div>
 
@@ -459,28 +491,27 @@ const ProductDetails = () => {
               <div className='flex items-center space-x-4'>
                 <div className='flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden'>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      updateQuantity(quantity - 1);
-                    }}
-                    className='px-3 py-2 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors'>
+                    onClick={() => decreaseQuantity(product._id)}
+                    disabled={!product || !isInCart(product._id)}
+                    className='px-3 py-2 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
                     <Minus className='h-4 w-4' />
                   </button>
                   <span className='w-12 text-center border-x border-gray-300 dark:border-gray-600 py-2'>
-                    {quantity}
+                    {cartItems?.find((item) => item._id === product?._id)
+                      ?.quantity || 1}
                   </span>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      updateQuantity(quantity + 1);
-                    }}
-                    className='px-3 py-2 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors'>
+                    onClick={() => increaseQuantity(product._id)}
+                    disabled={
+                      !product ||
+                      !isInCart(product._id) ||
+                      (cartItems?.find((item) => item._id === product._id)
+                        ?.quantity || 0) >= (product?.stock?.qty || 1)
+                    }
+                    className='px-3 py-2 text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
                     <Plus className='h-4 w-4' />
                   </button>
                 </div>
-                <span className='text-sm text-gray-500 dark:text-gray-400'>
-                  {product.inStock ? 'In stock' : 'Out of stock'}
-                </span>
               </div>
             </div>
 
@@ -488,22 +519,29 @@ const ProductDetails = () => {
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  handleAddToCart(quantity);
+                  handleAddToCart(1); // Always add 1 at a time
                 }}
                 className='flex-1 h-12 text-base font-medium'
-                disabled={!product.inStock}>
+                disabled={
+                  !product?.stock?.qty > 0 ||
+                  cartItems?.some((item) => item._id === product?._id)
+                }>
                 <ShoppingCart className='h-5 w-5 mr-2' />
-                Add to Cart
+                {cartItems?.some((item) => item._id === product?._id)
+                  ? 'In Cart'
+                  : product?.stock?.qty > 0
+                    ? 'Add to Cart'
+                    : 'Out of Stock'}
               </Button>
 
               <div className='flex items-center gap-2'>
-                <div className='relative h-12 w-12'>
-                  <WishlistButton
-                    product={product}
-                    className='h-full w-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-center'
-                    onWishlistUpdate={handleWishlistUpdate}
-                  />
-                </div>
+                <WishlistButton
+                  product={product}
+                  className='h-12 w-12 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors rounded-md'
+                  buttonClass='h-full w-full flex items-center justify-center p-0'
+                  iconClass='h-5 w-5 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+                  onWishlistUpdate={handleWishlistUpdate}
+                />
 
                 <div className='relative h-12 w-12'>
                   <Button

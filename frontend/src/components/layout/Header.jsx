@@ -97,9 +97,9 @@ const Header = () => {
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { itemCount: cartCount } = useCart();
-  const { items: wishlistItems } = useWishlist();
-  const wishlistCount = wishlistItems.length;
+  const { cartItems = [], itemCount: cartCount = 0 } = useCart();
+  const { items: wishlistItems = [], hasLoaded } = useWishlist();
+  const wishlistCount = hasLoaded ? wishlistItems.length : 0;
   const { isAuthenticated, user, logout, isLoading: authLoading } = useAuth();
 
   // Auth state changes are handled internally
@@ -630,7 +630,7 @@ const Header = () => {
                   />
                   {wishlistCount > 0 && (
                     <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                      {wishlistCount}
                     </span>
                   )}
                 </Link>
@@ -642,7 +642,8 @@ const Header = () => {
                   <ShoppingCart className='h-5 w-5' />
                   {cartCount > 0 && (
                     <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-                      {cartCount > 9 ? '9+' : cartCount}
+                      {cartCount}
+                      {/* {cartCount > 9 ? '9+' : cartCount} */}
                     </span>
                   )}
                 </Link>

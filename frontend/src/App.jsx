@@ -110,6 +110,7 @@ function App() {
           <Route path={ROUTES.CATEGORIES} element={<Categories />} />
           <Route path={ROUTES.SEARCH} element={<SearchResults />} />
           <Route path={ROUTES.FAQ} element={<FAQs />} />
+          <Route path={ROUTES.CART} element={<Cart />} />
 
           {/* ========== Auth Routes ========== */}
           <Route path={ROUTES.LOGIN} element={<Login />} />
@@ -156,7 +157,6 @@ function App() {
             />
 
             <Route path={ROUTES.HELP} element={<Help />} />
-            <Route path={ROUTES.CART} element={<Cart />} />
             <Route path={ROUTES.CHECKOUT} element={<Checkout />} />
             <Route
               path={ROUTES.ORDER_CONFIRMATION}

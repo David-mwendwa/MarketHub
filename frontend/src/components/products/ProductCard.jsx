@@ -1,68 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { ROUTES } from '../../constants/routes';
-import { Star, ShoppingCart, Eye, Loader2 } from 'lucide-react';
-import WishlistButton from '../common/WishlistButton';
+import {
+  Star,
+  ShoppingCart,
+  Eye,
+  Loader2,
+  Check,
+  Minus,
+  Plus,
+  Heart,
+} from 'lucide-react';
 
 const ProductCard = ({ product, loading = false }) => {
   const {
-    id,
+    _id,
     name,
     price,
-    originalPrice,
+    specialPrice,
     rating = 0,
     thumbnail,
-    category = 'Electronics',
+    category = 'Uncategorized',
+    stock = { qty: 0, status: 'out_of_stock' },
     isNew,
     isOnSale,
     reviewCount = 0,
-  } = product;
-  console.log({ product });
+    typeId,
+    vendor,
+  } = product || {};
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { addToCart } = useCart();
-  const { isInWishlist } = useWishlist();
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsAddingToCart(true);
+  const {
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    isInCart,
+    increaseQuantity, 
+  decreaseQuantity,
+    getItemQuantity,
+  } = useCart();
 
-    addToCart({
-      ...product,
-      quantity: 1,
-      price: product.discountedPrice || product.price,
-    });
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
-    // Trigger animation
-    setIsAnimating(true);
-    setTimeout(() => {
-      setIsAddingToCart(false);
-      setTimeout(() => setIsAnimating(false), 200);
-    }, 1000);
-  };
+  const isOutOfStock = !product?.isInStock || stock?.qty <= 0;
+  const currentStock = stock?.qty || 0;
+  const displayPrice =
+    specialPrice !== null && specialPrice < price ? specialPrice : price;
+  const showOriginalPrice = specialPrice !== null && specialPrice < price;
+  const isProductInCart = isInCart(_id);
+  const currentQuantity = getItemQuantity(_id) || 0;
+
+  const handleAddToCart = useCallback(
+    (e) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+
+      console.log({specialPrice})
+
+      if (!_id || isOutOfStock) return;
+      // Set loading state
+      setIsAddingToCart(true);
+      const productData = {
+        ...product,
+        _id,
+        quantity: 1,
+        price: displayPrice,
+        originalPrice: price,
+        stock: currentStock,
+        thumbnail:
+          thumbnail || 'https://via.placeholder.com/300x300?text=No+Image',
+      };
+      // Add to cart
+      addToCart(productData);
+      // Animation sequence
+      setTimeout(() => {
+        setIsAddingToCart(false);
+        setIsAnimating(true);
+
+        // Reset animation after showing checkmark
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 1000); // Show checkmark for 1 second
+      }, 500); // Show loading spinner for 0.5 seconds
+    },
+    [
+      _id,
+      isOutOfStock,
+      displayPrice,
+      price,
+      currentStock,
+      thumbnail,
+      addToCart,
+      product,
+    ]
+  );
+
+  const handleWishlistToggle = useCallback(
+    (e) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+
+      if (!_id) return;
+
+      if (isInWishlist(_id)) {
+        removeFromWishlist(_id);
+      } else {
+        addToWishlist(product);
+      }
+    },
+    [_id, isInWishlist, product, addToWishlist, removeFromWishlist]
+  );
 
   if (loading) {
     return <ProductCardSkeleton />;
   }
 
-  // Debug: Log the product data to check the ID
-  console.log('Product data:', { product, id });
-
-  // Get the ID from the most reliable source - prioritize _id as it's the MongoDB primary key
-  const productId = product._id || id || product.id;
-
-  if (!productId) {
+  if (!_id) {
     console.error('Product ID is undefined', { product });
-    return null; // or handle the error appropriately
+    return null;
   }
 
-  // Ensure the ID is a string for the URL
-  const productUrl = ROUTES.PRODUCT.replace(':id', String(productId));
+  const productUrl = ROUTES.PRODUCT.replace(':id', _id);
 
   return (
     <div className='group bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full'>
@@ -71,13 +134,21 @@ const ProductCard = ({ product, loading = false }) => {
         className='block group-hover:shadow-inner transition-all duration-300 bg-white'>
         {/* Product Image */}
         <div className='relative h-56 w-full flex items-center justify-center p-2 bg-white'>
-          {/* Hover overlay */}
-          <div className='absolute inset-0 bg-gradient-to-b from-transparent to-black/5 dark:to-black/10 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+          {/* Out of stock overlay */}
+          {isOutOfStock && (
+            <div className='absolute inset-0 bg-black/50 z-10 flex items-center justify-center'>
+              <span className='bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full'>
+                Out of Stock
+              </span>
+            </div>
+          )}
 
           {/* Main image */}
           <div className='relative w-full h-full flex items-center justify-center p-4'>
             <img
-              src={thumbnail}
+              src={
+                thumbnail || 'https://via.placeholder.com/300x300?text=No+Image'
+              }
               alt={name}
               className='max-h-[180px] w-auto h-auto object-contain transition-transform duration-300 group-hover:scale-105'
               loading='lazy'
@@ -96,10 +167,9 @@ const ProductCard = ({ product, loading = false }) => {
                 New
               </div>
             )}
-            {isOnSale && originalPrice > price && (
+            {specialPrice != null && specialPrice < price && (
               <div className='bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full'>
-                {Math.round(((originalPrice - price) / originalPrice) * 100)}%
-                OFF
+                {Math.round(((price - specialPrice) / price) * 100)}% OFF
               </div>
             )}
           </div>
@@ -107,11 +177,21 @@ const ProductCard = ({ product, loading = false }) => {
           {/* Quick Actions */}
           <div className='absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20'>
             <div className='flex justify-center space-x-2'>
-              <WishlistButton
-                product={product}
-                size={20}
-                className='bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700'
-              />
+              <button
+                onClick={handleWishlistToggle}
+                className={`p-2 rounded-full transition-colors ${
+                  isInWishlist(_id)
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/80 dark:text-red-200'
+                    : 'bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700'
+                }`}
+                title={
+                  isInWishlist(_id) ? 'Remove from wishlist' : 'Add to wishlist'
+                }>
+                <Heart
+                  className='h-5 w-5'
+                  fill={isInWishlist(_id) ? 'currentColor' : 'none'}
+                />
+              </button>
               <Link
                 to={productUrl}
                 className='p-2 bg-white/90 dark:bg-gray-800/90 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-colors'
@@ -154,33 +234,81 @@ const ProductCard = ({ product, loading = false }) => {
 
         {/* Price & Add to Cart */}
         <div className='mt-auto flex items-center justify-between'>
-          <div>
-            <span className='text-xl font-bold text-gray-900 dark:text-white'>
-              KES {price?.toLocaleString()}
-            </span>
-            {originalPrice > price && (
-              <span className='ml-2 text-sm text-gray-500 dark:text-gray-400 line-through'>
-                KES {originalPrice?.toLocaleString()}
-              </span>
-            )}
+          <div className='flex-1 min-w-0 mr-4'>
+            <div className='flex flex-col'>
+              {specialPrice != null && specialPrice < price ? (
+                <>
+                  <div className='flex items-center space-x-1'>
+                    <span className='text-base font-bold text-gray-900 dark:text-white whitespace-nowrap'>
+                      KES {specialPrice?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className='text-xs text-gray-500 dark:text-gray-400 line-through whitespace-nowrap'>
+                    KES {price?.toLocaleString()}
+                  </div>
+                </>
+              ) : (
+                <span className='text-base font-bold text-gray-900 dark:text-white whitespace-nowrap'>
+                  KES {price?.toLocaleString()}
+                </span>
+              )}
+            </div>
           </div>
-          <Button
-            size='sm'
-            variant='outline'
-            className={`rounded-full border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-300 ${
-              isAnimating ? '!bg-green-100 dark:!bg-green-900/30' : ''
-            }`}
-            onClick={handleAddToCart}
-            disabled={isAddingToCart}
-            title='Add to cart'>
-            {isAddingToCart ? (
-              <Loader2 className='h-4 w-4 animate-spin' />
-            ) : isAnimating ? (
-              <span className='text-green-600 dark:text-green-400'>✓</span>
-            ) : (
-              <ShoppingCart className='h-4 w-4' />
-            )}
-          </Button>
+
+          {isProductInCart ? (
+            <div className='flex-shrink-0'>
+              {' '}
+              {/* Prevent cart controls from affecting the layout */}
+              <div className='flex items-center space-x-2 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 p-1'>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    decreaseQuantity(_id);
+                  }}
+                  className='p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-full transition-colors'
+                  aria-label='Decrease quantity'>
+                  <Minus className='h-3 w-3' />
+                </button>
+                <span className='text-sm font-medium min-w-[20px] text-center'>
+                  {getItemQuantity(_id) || 0}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    increaseQuantity(_id);
+                  }}
+                  disabled={currentQuantity >= currentStock}
+                  className='p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-full transition-colors disabled:opacity-50'
+                  aria-label='Increase quantity'>
+                  <Plus className='h-3 w-3' />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className='flex-shrink-0'>
+              {' '}
+              {/* Wrap button in a flex-shrink-0 container */}
+              <Button
+                size='sm'
+                variant='outline'
+                className={`rounded-full border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-all duration-300 ${
+                  isAnimating ? '!bg-green-100 dark:!bg-green-900/30' : ''
+                }`}
+                onClick={handleAddToCart}
+                disabled={isAddingToCart || isOutOfStock}
+                title={isOutOfStock ? 'Out of stock' : 'Add to cart'}>
+                {isAddingToCart ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : isAnimating ? (
+                  <Check className='h-4 w-4 text-green-600 dark:text-green-400' />
+                ) : (
+                  <ShoppingCart className='h-4 w-4' />
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -213,19 +341,6 @@ const ProductCardSkeleton = () => {
             ))}
           </div>
           <div className='h-3 w-10 bg-gray-200 dark:bg-gray-700 rounded-full ml-2' />
-        </div>
-
-        {/* Color Swatches Skeleton */}
-        <div className='flex items-center mb-4 space-x-2'>
-          <div className='h-3 w-12 bg-gray-200 dark:bg-gray-700 rounded-full' />
-          <div className='flex -space-x-1.5'>
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className='h-4 w-4 rounded-full bg-gray-200 dark:bg-gray-700'
-              />
-            ))}
-          </div>
         </div>
 
         {/* Price & Add to Cart Skeleton */}
