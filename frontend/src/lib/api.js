@@ -51,7 +51,6 @@ api.interceptors.response.use(
       // The request was made but no response was received
       toast.error('Network error. Please check your connection.');
     } else {
-      // Something happened in setting up the request
       toast.error('An error occurred. Please try again.');
     }
     return Promise.reject(error);
@@ -61,12 +60,24 @@ api.interceptors.response.use(
 // Auth API endpoints
 export const authAPI = {
   login: (email, password) =>
-    api.post('/auth/login', { email, password }).then((res) => res.data),
+    api.post('/login', { email, password }).then((res) => res.data),
   register: (userData) =>
-    api.post('/auth/register', userData).then((res) => res.data),
-  getMe: () => api.get('/auth/me').then((res) => res.data),
-  logout: () => api.post('/auth/logout').then((res) => res.data),
-  refreshToken: () => api.post('/auth/refresh-token').then((res) => res.data),
+    api.post('/register', userData).then((res) => res.data),
+  getMe: () => api.get('/me').then((res) => res.data),
+  logout: () => api.post('/logout').then((res) => res.data),
+  forgotPassword: (email) =>
+    api.post('/password/forgot', { email }).then((res) => res.data),
+  resetPassword: (token, newPassword) =>
+    api
+      .post(`/password/reset/${token}`, { newPassword })
+      .then((res) => res.data),
+  updatePassword: (currentPassword, newPassword) =>
+    api
+      .post('/password/update', { currentPassword, newPassword })
+      .then((res) => res.data),
+  updateProfile: (userData) =>
+    api.post('/update/me', userData).then((res) => res.data),
+  refreshToken: () => api.post('/refresh-token').then((res) => res.data),
 };
 
 // Products API endpoints

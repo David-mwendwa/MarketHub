@@ -40,8 +40,8 @@ const ProductCard = ({ product, loading = false }) => {
     updateQuantity,
     removeFromCart,
     isInCart,
-    increaseQuantity, 
-  decreaseQuantity,
+    increaseQuantity,
+    decreaseQuantity,
     getItemQuantity,
   } = useCart();
 
@@ -60,7 +60,7 @@ const ProductCard = ({ product, loading = false }) => {
       e?.preventDefault();
       e?.stopPropagation();
 
-      console.log({specialPrice})
+      console.log({ specialPrice });
 
       if (!_id || isOutOfStock) return;
       // Set loading state
@@ -192,12 +192,16 @@ const ProductCard = ({ product, loading = false }) => {
                   fill={isInWishlist(_id) ? 'currentColor' : 'none'}
                 />
               </button>
-              <Link
-                to={productUrl}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = productUrl;
+                }}
                 className='p-2 bg-white/90 dark:bg-gray-800/90 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-colors'
-                onClick={(e) => e.stopPropagation()}>
+                title='Quick view'>
                 <Eye className='h-5 w-5 text-gray-700 dark:text-gray-300' />
-              </Link>
+              </button>
             </div>
           </div>
         </div>

@@ -630,7 +630,7 @@ const Header = () => {
                   />
                   {wishlistCount > 0 && (
                     <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-                      {wishlistCount}
+                      { wishlistCount > 9 ? '9+' : wishlistCount}
                     </span>
                   )}
                 </Link>
@@ -642,8 +642,7 @@ const Header = () => {
                   <ShoppingCart className='h-5 w-5' />
                   {cartCount > 0 && (
                     <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-                      {cartCount}
-                      {/* {cartCount > 9 ? '9+' : cartCount} */}
+                      {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
                 </Link>
