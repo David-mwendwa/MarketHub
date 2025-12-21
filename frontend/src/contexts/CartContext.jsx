@@ -37,14 +37,17 @@ const calculateItemCount = (items) => {
 };
 
 const cartReducer = (state, action) => {
-  // if (debug) {
-    console.log('🔄 Cart Reducer Action:', {
-      type: action.type,
-      payload: action.payload,
-      previousState: state,
-      timestamp: new Date().toISOString(),
-    });
-  // }
+  console.log('🔄 Cart Reducer Action:', {
+    type: action.type,
+    payload: action.payload,
+    previousState: state,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Log the full state for debugging
+  console.log('📦 Current cart items:', state.items);
+  console.log('🔢 Current item count:', state.itemCount);
+  console.log('💰 Current total:', state.total);
   let newItems = [...state.items];
 
   switch (action.type) {
@@ -117,7 +120,24 @@ const cartReducer = (state, action) => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, loadCart());
+  // Initialize state with loaded cart
+  const initialState = loadCart();
+  console.log('🚀 Initial cart state:', initialState);
+
+  const [state, dispatch] = useReducer(cartReducer, initialState);
+
+  // Log state changes
+  useEffect(() => {
+    console.log('🛒 Cart state updated:', state);
+
+    // Save to localStorage whenever cart changes
+    try {
+      localStorage.setItem('cart', JSON.stringify(state));
+      console.log('💾 Cart saved to localStorage');
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
+  }, [state]);
 
   // Save to localStorage whenever cart changes
   useEffect(() => {
@@ -155,21 +175,17 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
   }, []);
 
-  const updateQuantity = useCallback(
-    (productId, quantity) => {
-      if (quantity < 1) {
-        removeFromCart(productId);
-        return;
-      }
-      dispatch({
-        type: 'UPDATE_QUANTITY',
-        payload: { _id: productId, quantity },
-      });
-    },
-    [removeFromCart]
-  );
+  const updateQuantity = useCallback((id, quantity) => {
+    console.log(`Updating quantity for item ${id} to ${quantity}`);
+    if (!id) {
+      console.error('Cannot update quantity: Missing item ID');
+      return;
+    }
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { _id: id, quantity } });
+  }, []);
 
   const clearCart = useCallback(() => {
+    console.log('🔄 Clearing cart');
     dispatch({ type: 'CLEAR_CART' });
     toast.success('Cart cleared', {
       position: 'bottom-right',
@@ -178,8 +194,10 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const isInCart = useCallback(
-    (productId) => {
-      return state.items.some((item) => item._id === productId);
+    (id) => {
+      const exists = state.items.some((item) => item._id === id);
+      console.log(`Checking if item ${id} is in cart:`, exists);
+      return exists;
     },
     [state.items]
   );
@@ -229,7 +247,7 @@ export const CartProvider = ({ children }) => {
         isInCart,
         getItemQuantity,
         increaseQuantity,
-        decreaseQuantity
+        decreaseQuantity,
       }}>
       {children}
     </CartContext.Provider>

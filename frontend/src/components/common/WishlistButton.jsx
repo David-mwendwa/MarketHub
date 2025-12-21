@@ -67,14 +67,14 @@ const WishlistButton = ({
   onWishlistUpdate,
 }) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const isWishlisted = isInWishlist(product.id);
+  const isWishlisted = isInWishlist(product._id || product.id);
 
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (isWishlisted) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(product._id || product.id);
       if (onWishlistUpdate) {
         onWishlistUpdate(false, product.name);
       } else {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
+import WishlistButton from '@/components/common/WishlistButton';
 
 // Shipping Modal Component
 const ShippingModal = ({
@@ -59,10 +60,14 @@ const ShippingModal = ({
                       </span>
                     ) : (
                       <>
-                        ${option.price.toFixed(2)}
+                        {formatCurrency(option.price)}
                         {option.freeThreshold > 0 && (
                           <span className='text-gray-500 dark:text-gray-400 text-xs ml-2'>
-                            Free on orders over ${option.freeThreshold}
+                            Free on orders over{' '}
+                            {formatCurrency(option.freeThreshold).replace(
+                              'Ksh ',
+                              ''
+                            )}
                           </span>
                         )}
                       </>
@@ -108,19 +113,47 @@ import {
   Headphones,
 } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishListContext';
 import { format } from 'date-fns';
 
+// Format currency with Ksh and add thousands separators
+const formatCurrency = (amount) => {
+  return `Ksh ${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
 const Cart = () => {
-  // Removed unused navigate variable
-  const { items, total, updateQuantity, removeFromCart, clearCart } = useCart();
+  // Log initial render
+  console.log('🔍 Cart component rendering...');
+
+  const cartContext = useCart();
+  const { isInWishlist } = useWishlist();
+
+  // Log the full context to debug
+  useEffect(() => {
+    console.log('🔄 Cart Context:', cartContext);
+  }, [cartContext]);
+
+  // Destructure with defaults after logging the full context
+  const {
+    cartItems: items = [], // Map cartItems to items for backward compatibility
+    total = 0,
+    itemCount = 0,
+    updateQuantity = () => {},
+    removeFromCart = () => {},
+    clearCart = () => {},
+    addToCart = () => {},
+    isInCart = () => false,
+  } = cartContext || {};
+
   const [isRemoving, setIsRemoving] = useState(false);
-  const [savedItems, setSavedItems] = useState([]);
   const [promoCode, setPromoCode] = useState('');
   const [isPromoApplied, setIsPromoApplied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
-  // State for shipping modal
   const [showShippingModal, setShowShippingModal] = useState(false);
   const [shipping, setShipping] = useState(0);
 
@@ -150,11 +183,13 @@ const Cart = () => {
   ];
 
   // Calculate summary values
-  const subtotal = total;
+  const subtotal = parseFloat(total.toFixed(2));
   const shippingCost = subtotal > 100 ? 0 : subtotal > 0 ? 9.99 : 0;
-  const tax = subtotal * 0.08;
-  const discount = isPromoApplied ? subtotal * 0.1 : 0;
-  const grandTotal = subtotal + shippingCost + tax - discount;
+  const tax = parseFloat((subtotal * 0.08).toFixed(2));
+  const discount = isPromoApplied ? parseFloat((subtotal * 0.1).toFixed(2)) : 0;
+  const grandTotal = parseFloat(
+    (subtotal + shippingCost + tax - discount).toFixed(2)
+  );
 
   useEffect(() => {
     const today = new Date();
@@ -205,20 +240,6 @@ const Cart = () => {
     },
   ];
 
-  const handleSaveForLater = (item) => {
-    setSavedItems([...savedItems, item]);
-    removeFromCart(item.id);
-  };
-
-  const moveToCart = (item) => {
-    updateQuantity(item.id, 1);
-    setSavedItems(savedItems.filter((i) => i.id !== item.id));
-  };
-
-  const removeSavedItem = (id) => {
-    setSavedItems(savedItems.filter((item) => item.id !== id));
-  };
-
   const applyPromoCode = (e) => {
     e.preventDefault();
     if (promoCode.trim() === '') return;
@@ -232,33 +253,79 @@ const Cart = () => {
     }, 1000);
   };
 
-  const getStockStatus = (stock) => {
-    if (stock > 10)
-      return { text: 'In Stock', color: 'text-green-600 dark:text-green-400' };
-    if (stock > 3)
+  const getStockStatus = (item) => {
+    // Handle both number and object stock formats
+    const stockQty =
+      typeof item.stock === 'number' ? item.stock : (item.stock?.qty ?? 0);
+    const stockStatus =
+      item.stockStatus || (stockQty > 0 ? 'in_stock' : 'out_of_stock');
+
+    if (stockStatus === 'out_of_stock' || stockQty <= 0) {
       return {
-        text: `${stock} left in stock`,
+        text: 'Out of Stock',
+        color: 'text-gray-500 dark:text-gray-400',
+        isInStock: false,
+      };
+    }
+
+    if (stockQty > 10) {
+      return {
+        text: 'In Stock',
+        color: 'text-green-600 dark:text-green-400',
+        isInStock: true,
+      };
+    }
+
+    if (stockQty > 3) {
+      return {
+        text: `${stockQty} left in stock`,
         color: 'text-amber-600 dark:text-amber-400',
+        isInStock: true,
       };
-    if (stock > 0)
-      return {
-        text: `Only ${stock} left!`,
-        color: 'text-red-600 dark:text-red-400',
-      };
-    return { text: 'Out of Stock', color: 'text-gray-500 dark:text-gray-400' };
+    }
+
+    return {
+      text: `Only ${stockQty} left!`,
+      color: 'text-red-600 dark:text-red-400',
+      isInStock: true,
+    };
   };
 
   const handleQuantityChange = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    updateQuantity(id, newQuantity);
+    console.log('🔢 Updating quantity:', { id, newQuantity });
+    if (newQuantity < 1) {
+      console.log('⚠️ Quantity must be at least 1');
+      return;
+    }
+    updateQuantity(id, parseInt(newQuantity, 10));
   };
 
   const handleRemoveItem = (id) => {
+    console.log('🗑️ Removing item:', id);
     setIsRemoving(true);
-    setTimeout(() => {
+    try {
       removeFromCart(id);
+      console.log('✅ Item removed successfully');
+    } catch (error) {
+      console.error('❌ Error removing item:', error);
+    } finally {
       setIsRemoving(false);
-    }, 300);
+    }
+  };
+
+  const handleAddToCart = (product) => {
+    console.log('➕ Adding to cart:', {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      inCart: isInCart(product.id),
+    });
+    try {
+      addToCart(product, 1);
+      console.log('✅ Product added to cart');
+    } catch (error) {
+      console.error('❌ Error adding to cart:', error);
+    }
   };
 
   const handleClearCart = () => {
@@ -267,8 +334,20 @@ const Cart = () => {
     }
   };
 
+  // Log empty cart state
+  useEffect(() => {
+    if (!items || items.length === 0) {
+      console.log('🛒 Cart is empty');
+    } else {
+      console.log('🛒 Cart contents:', items);
+    }
+  }, [items]);
+
+  // Debug log before rendering
+  console.log('🎨 Rendering cart with items:', items);
+
   // Empty Cart UI
-  if (!items || items.length === 0) {
+  if (!items || !Array.isArray(items) || items.length === 0) {
     return (
       <div className='container mx-auto px-4 py-12'>
         <div className='max-w-2xl mx-auto text-center'>
@@ -403,8 +482,11 @@ const Cart = () => {
             Your Shopping Cart
           </h1>
           <p className='text-gray-500 dark:text-gray-400 mt-1'>
-            {items.reduce((sum, item) => sum + item.quantity, 0)} item
-            {items.length !== 1 ? 's' : ''} • ${subtotal.toFixed(2)}
+            {items.length} {items.length === 1 ? 'item' : 'items'}
+            {itemCount > 0 &&
+              ` • ${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'}`}
+            {' • '}
+            {formatCurrency(subtotal)}
           </p>
         </div>
 
@@ -431,13 +513,17 @@ const Cart = () => {
         {/* Cart Items */}
         <div className='lg:col-span-8 space-y-4'>
           <AnimatePresence>
-            {items.map((item) => {
-              const stockStatus = getStockStatus(item.stock || 10);
-              const isLowStock = (item.stock || 0) < 5 && (item.stock || 0) > 0;
+            {items.map((item, index) => {
+              const stockStatus = getStockStatus(item);
+              const stockQty =
+                typeof item.stock === 'number'
+                  ? item.stock
+                  : (item.stock?.qty ?? 0);
+              const isLowStock = stockQty < 5 && stockQty > 0;
 
               return (
                 <motion.div
-                  key={item.id}
+                  key={`${item.id}-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -100 }}
@@ -455,16 +541,29 @@ const Cart = () => {
                   )}
 
                   <div className='flex flex-col sm:flex-row'>
+                    {/* Cart item image with thumbnail */}
                     <Link
                       to={`/product/${item.id}`}
                       className='w-full sm:w-40 h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden flex-shrink-0 relative group-hover:opacity-90 transition-opacity'>
                       <img
-                        src={item.image}
+                        src={
+                          item.thumbnail || 'https://via.placeholder.com/150'
+                        }
                         alt={item.name}
                         className='w-full h-full object-cover'
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/150';
+                        }}
                       />
-                      {isLowStock && (
-                        <div className='absolute bottom-2 left-2 bg-amber-100 dark:bg-amber-900/90 text-amber-800 dark:text-amber-100 text-xs font-medium px-2 py-0.5 rounded-full'>
+                      {!stockStatus.isInStock && (
+                        <div className='absolute bottom-2 left-2 bg-red-100 dark:bg-red-900/90 text-red-800 dark:text-red-100 text-xs font-medium px-2 py-0.5 rounded-full'>
+                          Out of Stock
+                        </div>
+                      )}
+                      {stockStatus.isInStock && isLowStock && (
+                        <div
+                          className={`absolute bottom-2 left-2 ${stockStatus.color.includes('red') ? 'bg-red-100 dark:bg-red-900/90 text-red-800 dark:text-red-100' : 'bg-amber-100 dark:bg-amber-900/90 text-amber-800 dark:text-amber-100'} text-xs font-medium px-2 py-0.5 rounded-full`}>
                           {stockStatus.text}
                         </div>
                       )}
@@ -491,19 +590,27 @@ const Cart = () => {
                             <div className='sm:hidden mt-1'>
                               <p
                                 className={`text-xs ${stockStatus.color} flex items-center`}>
-                                {isLowStock && (
-                                  <AlertTriangle className='h-3 w-3 mr-1' />
+                                {!stockStatus.isInStock ? (
+                                  <span>Out of Stock</span>
+                                ) : isLowStock ? (
+                                  <>
+                                    <AlertTriangle className='h-3 w-3 mr-1' />
+                                    <span>{stockStatus.text}</span>
+                                  </>
+                                ) : (
+                                  <span>In Stock</span>
                                 )}
-                                {stockStatus.text}
                               </p>
                             </div>
                           </div>
 
                           <p className='text-lg font-semibold text-gray-900 dark:text-white mt-1 sm:mt-0 whitespace-nowrap'>
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatCurrency(item.price * item.quantity)}
                             {item.quantity > 1 && (
                               <span className='text-sm font-normal text-gray-500 dark:text-gray-400 ml-1'>
-                                (${item.price.toFixed(2)} each)
+                                (
+                                {formatCurrency(item.price).replace('Ksh ', '')}{' '}
+                                each)
                               </span>
                             )}
                           </p>
@@ -513,10 +620,16 @@ const Cart = () => {
                         <div className='hidden sm:block mt-1'>
                           <p
                             className={`text-xs ${stockStatus.color} flex items-center`}>
-                            {isLowStock && (
-                              <AlertTriangle className='h-3 w-3 mr-1' />
+                            {!stockStatus.isInStock ? (
+                              <span>Out of Stock</span>
+                            ) : isLowStock ? (
+                              <>
+                                <AlertTriangle className='h-3 w-3 mr-1' />
+                                <span>{stockStatus.text}</span>
+                              </>
+                            ) : (
+                              <span>In Stock</span>
                             )}
-                            {stockStatus.text}
                           </p>
                         </div>
 
@@ -533,7 +646,7 @@ const Cart = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleQuantityChange(
-                                  item.id,
+                                  item._id, // Changed from item.id to item._id
                                   item.quantity - 1
                                 );
                               }}
@@ -550,33 +663,30 @@ const Cart = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleQuantityChange(
-                                  item.id,
+                                  item._id, // Changed from item.id to item._id
                                   item.quantity + 1
                                 );
                               }}
                               disabled={
-                                isLowStock && item.quantity >= (item.stock || 1)
+                                !stockStatus.isInStock ||
+                                (isLowStock && item.quantity >= stockQty)
                               }
                               className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'>
                               <Plus className='h-4 w-4' />
                             </button>
                           </div>
 
-                          <div className='flex items-center gap-2'>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleSaveForLater(item);
-                              }}
-                              className='p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'>
-                              <Heart className='h-5 w-5' />
-                              <span className='sr-only'>Save for later</span>
-                            </button>
+                          <div className='flex items-center'>
+                            <WishlistButton
+                              product={item}
+                              className='h-10 w-10 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors rounded-md'
+                              buttonClass='h-full w-full flex items-center justify-center p-0'
+                            />
 
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
-                                handleRemoveItem(item.id);
+                                handleRemoveItem(item._id);
                               }}
                               className='p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'>
                               <Trash2 className='h-5 w-5' />
@@ -591,61 +701,6 @@ const Cart = () => {
               );
             })}
           </AnimatePresence>
-
-          {/* Saved for Later Section */}
-          {savedItems.length > 0 && (
-            <div className='mt-12'>
-              <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-4'>
-                Saved for Later ({savedItems.length})
-              </h2>
-              <div className='space-y-4'>
-                {savedItems.map((item) => (
-                  <motion.div
-                    key={`saved-${item.id}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className='bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700 p-4 flex items-center'>
-                    <Link
-                      to={`/product/${item.id}`}
-                      className='w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden flex-shrink-0'>
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className='w-full h-full object-cover'
-                      />
-                    </Link>
-
-                    <div className='ml-4 flex-1 min-w-0'>
-                      <Link
-                        to={`/product/${item.id}`}
-                        className='font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 truncate block'>
-                        {item.name}
-                      </Link>
-                      <p className='text-sm text-gray-500 dark:text-gray-400'>
-                        ${item.price.toFixed(2)}
-                      </p>
-                    </div>
-
-                    <div className='flex items-center gap-2 ml-4'>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        onClick={() => moveToCart(item)}
-                        className='whitespace-nowrap'>
-                        Add to Cart
-                      </Button>
-                      <button
-                        onClick={() => removeSavedItem(item.id)}
-                        className='p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'>
-                        <X className='h-4 w-4' />
-                        <span className='sr-only'>Remove</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Order Summary */}
@@ -653,13 +708,16 @@ const Cart = () => {
           <div className='bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden h-fit sticky top-6'>
             {/* Order Summary Header */}
             <div className='bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-b border-gray-100 dark:border-gray-700'>
-              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
-                Order Summary
-              </h2>
-              <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-                {items.reduce((sum, item) => sum + item.quantity, 0)} item
-                {items.length !== 1 ? 's' : ''} in cart
-              </p>
+              <div className='flex items-center justify-between'>
+                <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                  Order Summary
+                </h2>
+                <p className='text-sm text-gray-500 dark:text-gray-400'>
+                  {items.length} {items.length === 1 ? 'item' : 'items'}
+                  {itemCount > 0 &&
+                    ` • ${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'}`}
+                </p>
+              </div>
             </div>
 
             <div className='p-6'>
@@ -716,7 +774,9 @@ const Cart = () => {
                       <div>
                         <p className='font-medium'>Promo code applied!</p>
                         <p className='text-green-700 dark:text-green-300'>
-                          You saved ${discount.toFixed(2)} with this order.
+                          You saved{' '}
+                          {formatCurrency(discount).replace('Ksh ', '')} with
+                          this order.
                         </p>
                       </div>
                       <button
@@ -734,7 +794,9 @@ const Cart = () => {
                     <span className='text-gray-600 dark:text-gray-300'>
                       Subtotal
                     </span>
-                    <span className='font-medium'>${subtotal.toFixed(2)}</span>
+                    <span className='font-medium'>
+                      {formatCurrency(subtotal)}
+                    </span>
                   </div>
 
                   {shipping > 0 ? (
@@ -750,7 +812,7 @@ const Cart = () => {
                         </button>
                       </div>
                       <span className='font-medium'>
-                        ${shipping.toFixed(2)}
+                        {formatCurrency(shipping)}
                       </span>
                     </div>
                   ) : (
@@ -764,14 +826,14 @@ const Cart = () => {
                     <span className='text-gray-600 dark:text-gray-300'>
                       Tax
                     </span>
-                    <span className='font-medium'>${tax.toFixed(2)}</span>
+                    <span className='font-medium'>{formatCurrency(tax)}</span>
                   </div>
 
                   {isPromoApplied && (
                     <div className='flex justify-between text-green-600 dark:text-green-400'>
                       <span>Promo Discount</span>
                       <span className='font-medium'>
-                        -${discount.toFixed(2)}
+                        -{formatCurrency(discount).replace('Ksh ', '')}
                       </span>
                     </div>
                   )}
@@ -780,12 +842,13 @@ const Cart = () => {
                     <span>Total</span>
                     <div className='text-right'>
                       <div className='text-gray-900 dark:text-white'>
-                        ${grandTotal.toFixed(2)}
+                        {formatCurrency(grandTotal)}
                       </div>
                       {shipping > 0 && subtotal < 100 && (
                         <div className='text-xs font-normal text-green-600 dark:text-green-400'>
-                          Add ${(100 - subtotal).toFixed(2)} more for free
-                          shipping!
+                          Add{' '}
+                          {formatCurrency(100 - subtotal).replace('Ksh ', '')}{' '}
+                          more for free shipping!
                         </div>
                       )}
                     </div>
@@ -808,9 +871,16 @@ const Cart = () => {
                   className='w-full bg-primary-600 hover:bg-primary-700 text-white py-3 text-base font-medium mt-2'
                   size='lg'
                   as={Link}
-                  to='/checkout'>
-                  Proceed to Checkout
-                  <ArrowRight className='ml-2 h-5 w-5' />
+                  to='/checkout'
+                  disabled={items.length === 0}>
+                  {items.length > 0 ? (
+                    <>
+                      Proceed to Checkout
+                      <ArrowRight className='ml-2 h-5 w-5' />
+                    </>
+                  ) : (
+                    'Your Cart is Empty'
+                  )}
                 </Button>
 
                 <div className='text-center'>
