@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useCallback,
+  useMemo,
 } from 'react';
 
 const WishlistContext = createContext();
