@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -307,12 +307,11 @@ const ProductDetails = () => {
     <div className='container mx-auto px-4 py-8 sm:py-12'>
       {/* Back button */}
       <Button
-        as={Link}
-        to='/shop'
         variant='ghost'
+        onClick={() => navigate(-1)}
         startIcon={<ArrowLeft className='h-4 w-4' />}
         className='mb-6'>
-        Back to shop
+        Back
       </Button>
 
       {/* Success notification */}

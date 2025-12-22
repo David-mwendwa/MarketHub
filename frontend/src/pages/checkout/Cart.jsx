@@ -125,16 +125,8 @@ const formatCurrency = (amount) => {
 };
 
 const Cart = () => {
-  // Log initial render
-  console.log('🔍 Cart component rendering...');
-
   const cartContext = useCart();
   const { isInWishlist } = useWishlist();
-
-  // Log the full context to debug
-  useEffect(() => {
-    console.log('🔄 Cart Context:', cartContext);
-  }, [cartContext]);
 
   // Destructure with defaults after logging the full context
   const {
@@ -292,20 +284,16 @@ const Cart = () => {
   };
 
   const handleQuantityChange = (id, newQuantity) => {
-    console.log('🔢 Updating quantity:', { id, newQuantity });
     if (newQuantity < 1) {
-      console.log('⚠️ Quantity must be at least 1');
       return;
     }
     updateQuantity(id, parseInt(newQuantity, 10));
   };
 
   const handleRemoveItem = (id) => {
-    console.log('🗑️ Removing item:', id);
     setIsRemoving(true);
     try {
       removeFromCart(id);
-      console.log('✅ Item removed successfully');
     } catch (error) {
       console.error('❌ Error removing item:', error);
     } finally {
@@ -314,18 +302,9 @@ const Cart = () => {
   };
 
   const handleAddToCart = (product) => {
-    console.log('➕ Adding to cart:', {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      inCart: isInCart(product.id),
-    });
     try {
       addToCart(product, 1);
-      console.log('✅ Product added to cart');
-    } catch (error) {
-      console.error('❌ Error adding to cart:', error);
-    }
+    } catch (error) {}
   };
 
   const handleClearCart = () => {
@@ -333,18 +312,6 @@ const Cart = () => {
       clearCart();
     }
   };
-
-  // Log empty cart state
-  useEffect(() => {
-    if (!items || items.length === 0) {
-      console.log('🛒 Cart is empty');
-    } else {
-      console.log('🛒 Cart contents:', items);
-    }
-  }, [items]);
-
-  // Debug log before rendering
-  console.log('🎨 Rendering cart with items:', items);
 
   // Empty Cart UI
   if (!items || !Array.isArray(items) || items.length === 0) {
@@ -543,7 +510,7 @@ const Cart = () => {
                   <div className='flex flex-col sm:flex-row'>
                     {/* Cart item image with thumbnail */}
                     <Link
-                      to={`/product/${item.id}`}
+                      to={`/product/${item._id || item.id}`}
                       className='w-full sm:w-40 h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden flex-shrink-0 relative group-hover:opacity-90 transition-opacity'>
                       <img
                         src={
@@ -574,7 +541,7 @@ const Cart = () => {
                         <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between'>
                           <div>
                             <Link
-                              to={`/product/${item.id}`}
+                              to={`/product/${item._id || item.id}`}
                               className='hover:opacity-80 transition-opacity'>
                               <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
                                 {item.name}
@@ -883,36 +850,49 @@ const Cart = () => {
                   )}
                 </Button>
 
-                <div className='text-center'>
-                  <p className='text-sm text-gray-500 dark:text-gray-400'>
-                    or{' '}
-                    <Link
-                      to='/shop'
-                      className='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium'>
-                      Continue Shopping
-                    </Link>
-                  </p>
-                </div>
-
                 {/* Payment Methods */}
                 <div className='pt-4 border-t border-gray-100 dark:border-gray-700 mt-4'>
                   <p className='text-xs text-gray-500 dark:text-gray-400 text-center mb-3'>
                     We accept
                   </p>
-                  <div className='flex justify-center space-x-4'>
-                    {['visa', 'mastercard', 'amex', 'discover', 'paypal'].map(
-                      (type) => (
-                        <div
-                          key={type}
-                          className='h-6 w-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center'>
-                          <img
-                            src={`/payment-methods/${type}.svg`}
-                            alt={type}
-                            className='h-4 w-auto opacity-70'
-                          />
-                        </div>
-                      )
-                    )}
+                  <div className='flex justify-center items-center gap-4 flex-wrap'>
+                    {[
+                      {
+                        id: 'visa',
+                        name: 'Visa',
+                        icon: '/src/assets/images/visa-logo.svg',
+                      },
+                      {
+                        id: 'mastercard',
+                        name: 'Mastercard',
+                        icon: '/src/assets/images/mastercard-logo.svg',
+                      },
+                      {
+                        id: 'mpesa',
+                        name: 'M-Pesa',
+                        icon: '/src/assets/images/mpesa-logo.svg',
+                      },
+                      {
+                        id: 'paypal',
+                        name: 'PayPal',
+                        icon: '/src/assets/images/paypal-logo.svg',
+                      },
+                    ].map((method) => (
+                      <div
+                        key={method.id}
+                        className='h-8 w-12 bg-white dark:bg-gray-800 rounded flex items-center justify-center p-1 border border-gray-200 dark:border-gray-700'
+                        title={method.name}>
+                        <img
+                          src={method.icon}
+                          alt={method.name}
+                          className='h-full w-auto object-contain'
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/placeholder-payment.svg';
+                          }}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

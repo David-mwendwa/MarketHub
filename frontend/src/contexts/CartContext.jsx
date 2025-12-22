@@ -37,17 +37,6 @@ const calculateItemCount = (items) => {
 };
 
 const cartReducer = (state, action) => {
-  console.log('🔄 Cart Reducer Action:', {
-    type: action.type,
-    payload: action.payload,
-    previousState: state,
-    timestamp: new Date().toISOString(),
-  });
-
-  // Log the full state for debugging
-  console.log('📦 Current cart items:', state.items);
-  console.log('🔢 Current item count:', state.itemCount);
-  console.log('💰 Current total:', state.total);
   let newItems = [...state.items];
 
   switch (action.type) {
@@ -122,18 +111,13 @@ const cartReducer = (state, action) => {
 export const CartProvider = ({ children }) => {
   // Initialize state with loaded cart
   const initialState = loadCart();
-  console.log('🚀 Initial cart state:', initialState);
 
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  // Log state changes
+  // Save to localStorage whenever cart changes
   useEffect(() => {
-    console.log('🛒 Cart state updated:', state);
-
-    // Save to localStorage whenever cart changes
     try {
       localStorage.setItem('cart', JSON.stringify(state));
-      console.log('💾 Cart saved to localStorage');
     } catch (error) {
       console.error('Error saving cart to localStorage:', error);
     }
