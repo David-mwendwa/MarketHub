@@ -23,16 +23,44 @@ import {
   ChevronDown,
   Package,
   Headphones,
+  ShoppingBag,
+  Tag,
 } from 'lucide-react';
 
 const Checkout = () => {
-  const { items, clearCart, total, subtotal, shipping, tax } = useCart();
+  // Get the full cart state
+  const cartState = useCart() || {};
+
+  // Get cart items with fallback
+  const cartItems = cartState.cartItems || cartState.items || [];
+
+  // Destructure with proper fallbacks
+  const {
+    subtotal = 0,
+    shipping = 0,
+    tax = 0,
+    total = 0,
+    itemCount = 0,
+    clearCart,
+    hasOrderProtection = false,
+    toggleOrderProtection,
+    orderProtection = 0,
+  } = cartState;
+
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [activeStep, setActiveStep] = useState(1);
+
+  // Redirect to cart if empty
+  useEffect(() => {
+    if (cartItems.length === 0 && itemCount === 0) {
+      console.log('No items in cart, redirecting to cart page');
+      navigate('/cart');
+    }
+  }, [cartItems, itemCount, navigate]);
 
   // Calculate delivery date (2-4 business days from now)
   useEffect(() => {
@@ -70,7 +98,7 @@ const Checkout = () => {
 
       const order = {
         ...orderData,
-        items: items,
+        items: cartItems,
         orderNumber: `ORD-${Date.now()}`,
         status: 'processing',
         createdAt: new Date().toISOString(),
@@ -185,7 +213,7 @@ const Checkout = () => {
     );
   }
 
-  if (!items || items.length === 0) {
+  if (!cartItems || cartItems.length === 0) {
     return (
       <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8'>
         <div className='max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden'>
@@ -258,19 +286,29 @@ const Checkout = () => {
                   </div>
                   <div className='h-5 w-px bg-gray-200 dark:bg-gray-600' />
                   <div className='flex items-center space-x-1'>
-                    {['visa', 'mastercard', 'amex', 'discover', 'paypal'].map(
-                      (type) => (
-                        <div
-                          key={type}
-                          className='h-5 w-8 bg-gray-50 dark:bg-gray-700 rounded flex items-center justify-center'>
-                          <img
-                            src={`/payment-methods/${type}.svg`}
-                            alt={type}
-                            className='h-3 w-auto opacity-70'
-                          />
-                        </div>
-                      )
-                    )}
+                    {['visa', 'mastercard', 'mpesa', 'paypal'].map((type) => (
+                      <div
+                        key={type}
+                        className='h-5 w-8 bg-gray-50 dark:bg-gray-700 rounded flex items-center justify-center'>
+                        <img
+                          src={
+                            type === 'visa'
+                              ? '/src/assets/images/visa-logo.svg'
+                              : type === 'mastercard'
+                                ? '/src/assets/images/mastercard-logo.svg'
+                                : type === 'mpesa'
+                                  ? '/src/assets/images/mpesa-logo.svg'
+                                  : '/src/assets/images/paypal-logo.svg'
+                          }
+                          alt={type}
+                          className='h-3 w-auto opacity-70'
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://via.placeholder.com/40/2A2A2A/FFFFFF?text=${type.toUpperCase()}`;
+                          }}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -385,14 +423,15 @@ const Checkout = () => {
             {/* Order Summary - Mobile */}
             <div className='lg:hidden mt-6'>
               <OrderSummary
-                items={items}
+                key={`mobile-summary-${hasOrderProtection}`}
+                items={cartItems}
                 subtotal={subtotal}
                 shipping={shipping}
                 tax={tax}
                 total={total}
+                hasOrderProtection={hasOrderProtection}
+                orderProtection={orderProtection}
                 isCheckout={true}
-                onSubmitOrder={handleSubmitOrder}
-                isSubmitting={isSubmitting}
               />
             </div>
 
@@ -413,21 +452,28 @@ const Checkout = () => {
                     </h3>
                     <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
                       Protect your order against damage, loss, or theft for just
-                      $4.99
+                      Ksh 500
                     </p>
                     <div className='mt-3 flex items-center'>
                       <input
                         id='order-protection'
                         name='order-protection'
                         type='checkbox'
+                        checked={hasOrderProtection}
+                        onChange={toggleOrderProtection}
                         className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:checked:bg-primary-600 dark:focus:ring-primary-500'
                       />
                       <label
                         htmlFor='order-protection'
                         className='ml-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        Add Order Protection (+$4.99)
+                        Add Order Protection (+Ksh 500)
                       </label>
                     </div>
+                    {hasOrderProtection && (
+                      <p className='mt-2 text-xs text-green-600 dark:text-green-400'>
+                        Your order is protected against damage, loss, or theft.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -442,14 +488,15 @@ const Checkout = () => {
               transition={{ delay: 0.1 }}
               className='sticky top-6'>
               <OrderSummary
-                items={items}
+                key={`desktop-summary-${hasOrderProtection}`}
+                items={cartItems}
                 subtotal={subtotal}
                 shipping={shipping}
                 tax={tax}
                 total={total}
+                hasOrderProtection={hasOrderProtection}
+                orderProtection={orderProtection}
                 isCheckout={true}
-                onSubmitOrder={handleSubmitOrder}
-                isSubmitting={isSubmitting}
               />
 
               {/* Delivery Estimate */}
@@ -493,19 +540,29 @@ const Checkout = () => {
                   </div>
 
                   <div className='mt-4 flex justify-center space-x-6'>
-                    {['visa', 'mastercard', 'amex', 'discover', 'paypal'].map(
-                      (type) => (
-                        <div
-                          key={type}
-                          className='h-6 w-10 bg-gray-50 dark:bg-gray-700 rounded flex items-center justify-center'>
-                          <img
-                            src={`/payment-methods/${type}.svg`}
-                            alt={type}
-                            className='h-4 w-auto opacity-70'
-                          />
-                        </div>
-                      )
-                    )}
+                    {['visa', 'mastercard', 'mpesa', 'paypal'].map((type) => (
+                      <div
+                        key={type}
+                        className='h-6 w-10 bg-gray-50 dark:bg-gray-700 rounded flex items-center justify-center'>
+                        <img
+                          src={
+                            type === 'visa'
+                              ? '/src/assets/images/visa-logo.svg'
+                              : type === 'mastercard'
+                                ? '/src/assets/images/mastercard-logo.svg'
+                                : type === 'mpesa'
+                                  ? '/src/assets/images/mpesa-logo.svg'
+                                  : '/src/assets/images/paypal-logo.svg'
+                          }
+                          alt={type}
+                          className='h-4 w-auto opacity-70'
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://via.placeholder.com/40/2A2A2A/FFFFFF?text=${type.toUpperCase()}`;
+                          }}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

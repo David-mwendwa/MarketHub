@@ -64,10 +64,9 @@ const ShippingModal = ({
                         {option.freeThreshold > 0 && (
                           <span className='text-gray-500 dark:text-gray-400 text-xs ml-2'>
                             Free on orders over{' '}
-                            {formatCurrency(option.freeThreshold).replace(
-                              'Ksh ',
-                              ''
-                            )}
+                            {formatCurrency(option.freeThreshold)
+                              .replace('Ksh', '')
+                              .trim()}
                           </span>
                         )}
                       </>
@@ -115,22 +114,17 @@ import {
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishListContext';
 import { format } from 'date-fns';
-
-// Format currency with Ksh and add thousands separators
-const formatCurrency = (amount) => {
-  return `Ksh ${amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+import { formatCurrency } from '../../lib/utils';
 
 const Cart = () => {
-  const cartContext = useCart();
   const { isInWishlist } = useWishlist();
 
-  // Destructure with defaults after logging the full context
+  // Get all cart values from context
   const {
-    cartItems: items = [], // Map cartItems to items for backward compatibility
+    cartItems: items = [],
+    subtotal = 0,
+    shipping = 0,
+    tax = 0,
     total = 0,
     itemCount = 0,
     updateQuantity = () => {},
@@ -138,7 +132,7 @@ const Cart = () => {
     clearCart = () => {},
     addToCart = () => {},
     isInCart = () => false,
-  } = cartContext || {};
+  } = useCart() || {};
 
   const [isRemoving, setIsRemoving] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -147,7 +141,8 @@ const Cart = () => {
   const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);
   const [showShippingModal, setShowShippingModal] = useState(false);
-  const [shipping, setShipping] = useState(0);
+  // Use shipping from context instead of local state
+  // const [shipping, setShipping] = useState(0);
 
   // Shipping options data
   const shippingOptions = [
@@ -173,15 +168,6 @@ const Cart = () => {
       freeThreshold: 300,
     },
   ];
-
-  // Calculate summary values
-  const subtotal = parseFloat(total.toFixed(2));
-  const shippingCost = subtotal > 100 ? 0 : subtotal > 0 ? 9.99 : 0;
-  const tax = parseFloat((subtotal * 0.08).toFixed(2));
-  const discount = isPromoApplied ? parseFloat((subtotal * 0.1).toFixed(2)) : 0;
-  const grandTotal = parseFloat(
-    (subtotal + shippingCost + tax - discount).toFixed(2)
-  );
 
   useEffect(() => {
     const today = new Date();
@@ -460,14 +446,6 @@ const Cart = () => {
         <div className='flex flex-wrap gap-2'>
           <Button
             variant='outline'
-            as={Link}
-            to='/shop'
-            className='flex-1 md:flex-none'
-            startIcon={<ArrowLeft className='h-4 w-4' />}>
-            Continue Shopping
-          </Button>
-          <Button
-            variant='outline'
             onClick={handleClearCart}
             className='text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex-1 md:flex-none'
             startIcon={<Trash2 className='h-4 w-4' />}>
@@ -576,7 +554,9 @@ const Cart = () => {
                             {item.quantity > 1 && (
                               <span className='text-sm font-normal text-gray-500 dark:text-gray-400 ml-1'>
                                 (
-                                {formatCurrency(item.price).replace('Ksh ', '')}{' '}
+                                {formatCurrency(item.price)
+                                  .replace('Ksh', '')
+                                  .trim()}{' '}
                                 each)
                               </span>
                             )}
@@ -742,8 +722,8 @@ const Cart = () => {
                         <p className='font-medium'>Promo code applied!</p>
                         <p className='text-green-700 dark:text-green-300'>
                           You saved{' '}
-                          {formatCurrency(discount).replace('Ksh ', '')} with
-                          this order.
+                          {formatCurrency(discount).replace('Ksh', '').trim()}{' '}
+                          with this order.
                         </p>
                       </div>
                       <button
@@ -809,12 +789,14 @@ const Cart = () => {
                     <span>Total</span>
                     <div className='text-right'>
                       <div className='text-gray-900 dark:text-white'>
-                        {formatCurrency(grandTotal)}
+                        {formatCurrency(total)}
                       </div>
                       {shipping > 0 && subtotal < 100 && (
                         <div className='text-xs font-normal text-green-600 dark:text-green-400'>
                           Add{' '}
-                          {formatCurrency(100 - subtotal).replace('Ksh ', '')}{' '}
+                          {formatCurrency(100 - subtotal)
+                            .replace('Ksh', '')
+                            .trim()}{' '}
                           more for free shipping!
                         </div>
                       )}
@@ -838,17 +820,21 @@ const Cart = () => {
                   className='w-full bg-primary-600 hover:bg-primary-700 text-white py-3 text-base font-medium mt-2'
                   size='lg'
                   as={Link}
-                  to='/checkout'
-                  disabled={items.length === 0}>
-                  {items.length > 0 ? (
-                    <>
-                      Proceed to Checkout
-                      <ArrowRight className='ml-2 h-5 w-5' />
-                    </>
-                  ) : (
-                    'Your Cart is Empty'
-                  )}
+                  to='/checkout'>
+                  Proceed to Checkout
+                  <ArrowRight className='ml-2 h-5 w-5' />
                 </Button>
+
+                <div className='text-center'>
+                  <p className='text-sm text-gray-500 dark:text-gray-400'>
+                    or{' '}
+                    <Link
+                      to='/shop'
+                      className='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium'>
+                      Continue Shopping
+                    </Link>
+                  </p>
+                </div>
 
                 {/* Payment Methods */}
                 <div className='pt-4 border-t border-gray-100 dark:border-gray-700 mt-4'>

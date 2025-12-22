@@ -1,18 +1,25 @@
-// src/lib/utils.js
+/**
+ * Formats a number as Kenyan Shillings (Ksh)
+ * @param {number} amount - The amount to format
+ * @returns {string} Formatted currency string (e.g., 'Ksh 1,234')
+ */
 export const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
+  if (typeof amount !== 'number') {
+    amount = parseFloat(amount) || 0;
+  }
+  return `Ksh ${amount.toLocaleString('en-KE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
 };
 
 export const formatDate = (dateString) => {
-  const options = { 
-    year: 'numeric', 
-    month: 'long', 
+  const options = {
+    year: 'numeric',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   };
   return new Date(dateString).toLocaleDateString(undefined, options);
 };

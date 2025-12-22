@@ -24,16 +24,52 @@ const loadCart = () => {
   }
 };
 
-// Calculate cart total
-const calculateTotal = (items) => {
+// Calculate cart subtotal (sum of all items * quantity)
+const calculateSubtotal = (items) => {
   return items.reduce((sum, item) => {
     return sum + parseFloat(item.price) * (item.quantity || 1);
   }, 0);
 };
 
+// Calculate shipping cost
+const calculateShipping = (subtotal) => {
+  // Free shipping for orders over Ksh 1000
+  if (subtotal >= 1000) {
+    return 0;
+  }
+  // Standard shipping fee
+  return 200;
+};
+
+// Calculate tax (16% of subtotal)
+const calculateTax = (subtotal) => {
+  return Math.round(subtotal * 0.16);
+};
+
 // Calculate total items in cart
 const calculateItemCount = (items) => {
   return items.reduce((count, item) => count + (item.quantity || 1), 0);
+};
+
+// Calculate all cart values
+// In CartContext.jsx, update the calculateCartValues function
+const calculateCartValues = (items, hasOrderProtection = false) => {
+  const subtotal = calculateSubtotal(items);
+  const shipping = calculateShipping(subtotal);
+  const tax = calculateTax(subtotal);
+  const orderProtection = hasOrderProtection ? 500 : 0;
+  const total = subtotal + shipping + tax + orderProtection;
+  const itemCount = calculateItemCount(items);
+  
+  return {
+    subtotal,
+    shipping,
+    tax,
+    orderProtection,
+    total,
+    itemCount,
+    hasOrderProtection
+  };
 };
 
 const cartReducer = (state, action) => {
@@ -89,6 +125,15 @@ const cartReducer = (state, action) => {
       break;
     }
 
+    case 'TOGGLE_ORDER_PROTECTION': {
+      const newHasOrderProtection = !state.hasOrderProtection;
+      return {
+        ...state,
+        ...calculateCartValues(state.items, newHasOrderProtection),
+        hasOrderProtection: newHasOrderProtection,
+      };
+    }
+
     case 'CLEAR_CART':
       newItems = [];
       break;
@@ -97,14 +142,10 @@ const cartReducer = (state, action) => {
       return state;
   }
 
-  // Calculate new totals
-  const total = calculateTotal(newItems);
-  const itemCount = calculateItemCount(newItems);
-
+  // Calculate all cart values in one place
   return {
+    ...calculateCartValues(newItems),
     items: newItems,
-    total,
-    itemCount,
   };
 };
 
@@ -168,6 +209,10 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { _id: id, quantity } });
   }, []);
 
+  const toggleOrderProtection = useCallback(() => {
+    dispatch({ type: 'TOGGLE_ORDER_PROTECTION' });
+  }, []);
+
   const clearCart = useCallback(() => {
     console.log('🔄 Clearing cart');
     dispatch({ type: 'CLEAR_CART' });
@@ -221,12 +266,18 @@ export const CartProvider = ({ children }) => {
   return (
     <CartContext.Provider
       value={{
-        cartItems: state.items,
-        total: state.total,
-        itemCount: state.itemCount,
+        ...state, // Spread all state values
+        cartItems: state.items, // Alias for backward compatibility
+        items: state.items, // Original property name
+        subtotal: state.subtotal || 0,
+        shipping: state.shipping || 0,
+        tax: state.tax || 0,
+        total: state.total || 0,
+        itemCount: state.itemCount || 0,
         addToCart,
         removeFromCart,
         updateQuantity,
+        toggleOrderProtection,
         clearCart,
         isInCart,
         getItemQuantity,
@@ -236,7 +287,7 @@ export const CartProvider = ({ children }) => {
       {children}
     </CartContext.Provider>
   );
-};
+};;
 
 export const useCart = () => {
   const context = useContext(CartContext);
