@@ -43,20 +43,21 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       setError(null);
-      const { user: userData, token } = await authService.login(
-        email,
-        password
-      );
+      const response = await authService.login(email, password);
 
-      localStorage.setItem('token', token);
-      setUser(userData);
-      return userData;
+      if (response?.success && response.user) {
+        localStorage.setItem('token', response.token);
+        setUser(response); // Set the full response which includes success and user
+        return response.user;
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
       console.error('Login failed:', error);
-      setError(
-        error.response?.data?.message || 'Login failed. Please try again.'
-      );
-      throw error;
+      const errorMessage =
+        error.response?.data?.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -97,9 +98,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check auth status on component mount
+  // Check auth status on component mount and when user changes
   useEffect(() => {
-    checkAuth();
+    const token = localStorage.getItem('token');
+    if (token) {
+      checkAuth();
+    } else {
+      setIsLoading(false);
+    }
   }, [checkAuth]);
 
   const value = useMemo(

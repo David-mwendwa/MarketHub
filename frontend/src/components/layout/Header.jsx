@@ -100,7 +100,20 @@ const Header = () => {
   const { cartItems = [], itemCount: cartCount = 0 } = useCart();
   const { items: wishlistItems = [], hasLoaded } = useWishlist();
   const wishlistCount = hasLoaded ? wishlistItems.length : 0;
-  const { isAuthenticated, user, logout, isLoading: authLoading } = useAuth();
+  const {
+    isAuthenticated,
+    user: authData,
+    logout,
+    isLoading: authLoading,
+  } = useAuth();
+  const user = authData?.user; // Extract user from the response object
+
+  // Log user object for debugging
+  useEffect(() => {
+    if (isAuthenticated && authData?.user) {
+      console.log('User object from context:', authData);
+    }
+  }, [isAuthenticated, authData]);
 
   // Auth state changes are handled internally
   // No need for console logs in production
@@ -110,6 +123,11 @@ const Header = () => {
   const searchRef = useRef(null);
   const userMenuRef = useRef(null);
   const mobileMenuRef = useRef(null);
+
+  // Toggle user menu
+  const toggleUserMenu = () => {
+    setShowUserMenu((prev) => !prev);
+  };
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -233,7 +251,7 @@ const Header = () => {
           path: '/account/profile',
           description:
             'Manage your personal information, contact details, and preferences',
-          divider: userRole === 'seller',
+          divider: userRole === 'vendor',
         },
       ];
 
@@ -249,28 +267,28 @@ const Header = () => {
             divider: true,
           },
         ],
-        seller: [
+        vendor: [
           {
-            name: 'Seller Dashboard',
+            name: 'Vendor Dashboard',
             icon: BarChart2,
-            path: '/dashboard/seller',
+            path: '/dashboard/vendor',
             description:
               'Track sales, manage inventory, and view customer orders',
             divider: true,
           },
         ],
-        buyer: [
+        user: [
           {
             name: 'My Orders',
             icon: ShoppingBag,
-            path: ROUTES.DASHBOARD.BUYER_ORDERS,
+            path: ROUTES.DASHBOARD.CUSTOMER_ORDERS || '/dashboard/orders',
             description:
               'View order history, track shipments, and manage returns',
           },
           {
             name: 'Wishlist',
             icon: Heart,
-            path: ROUTES.DASHBOARD.BUYER_WISHLIST,
+            path: ROUTES.DASHBOARD.CUSTOMER_WISHLIST || '/dashboard/wishlist',
             description:
               'Your saved items and favorite products for later purchase',
             badge: wishlistCount > 0 ? wishlistCount.toString() : null,
@@ -308,16 +326,15 @@ const Header = () => {
     [cartCount, wishlistCount]
   ); // Add cartCount and wishlistCount as dependencies
 
-  // Toggle user menu
-  const toggleUserMenu = () => {
-    const newState = !showUserMenu;
-    console.log(`[Header] ${newState ? 'Opening' : 'Closing'} user menu`);
-    setShowUserMenu(newState);
-  };
-
   // Initialize user menu based on user role
   const userMenu = React.useMemo(() => {
-    return getUserMenuItems(user?.role || 'buyer');
+    // Map legacy roles to new role system if needed
+    const roleMap = {
+      buyer: 'user',
+      seller: 'vendor',
+    };
+    const normalizedRole = roleMap[user?.role] || user?.role || 'user';
+    return getUserMenuItems(normalizedRole);
   }, [user?.role, getUserMenuItems]);
 
   // Animation variants for menu items
@@ -630,7 +647,7 @@ const Header = () => {
                   />
                   {wishlistCount > 0 && (
                     <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-                      { wishlistCount > 9 ? '9+' : wishlistCount}
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
                     </span>
                   )}
                 </Link>
@@ -657,16 +674,18 @@ const Header = () => {
                       aria-label='User menu'>
                       <div className='relative'>
                         <div className='h-9 w-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-medium text-sm'>
-                          {user?.name
-                            ?.split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .toUpperCase() || <User className='h-4 w-4' />}
+                          {user?.firstName && user?.lastName ? (
+                            `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+                          ) : user?.firstName ? (
+                            user.firstName[0].toUpperCase()
+                          ) : (
+                            <User className='h-4 w-4' />
+                          )}
                         </div>
                         <div className='absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 bg-green-500'></div>
                       </div>
                       <span className='hidden md:inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors'>
-                        {user?.name?.split(' ')[0] || 'Account'}
+                        {user?.firstName || 'Account'}
                         <ChevronDown
                           className={`ml-1 h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''} text-gray-600 dark:text-gray-300`}
                         />
@@ -813,265 +832,3 @@ const Header = () => {
 };
 
 export default Header;
-//       }`}>
-//       <div className='border-b border-gray-100 dark:border-gray-800'>
-//         <div className='container mx-auto px-4'>
-//           <div className='flex items-center justify-between h-16'>
-//             {/* Logo */}
-//             <div className='flex items-center'>
-//               <Link to={ROUTES.HOME} className='flex items-center'>
-//                 <Logo className='h-8 w-auto' />
-//               </Link>
-//             </div>
-
-//             {/* Desktop Navigation */}
-//             <nav className='hidden lg:flex items-center space-x-1'>
-//               {navLinks.map((link) => (
-//                 <Link
-//                   key={link.path}
-//                   to={link.path}
-//                   className={`px-3 py-2 text-sm font-medium rounded-md ${
-//                     location.pathname === link.path
-//                       ? 'text-primary-600 dark:text-primary-400'
-//                       : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-//                   }`}>
-//                   {link.name}
-//                 </Link>
-//               ))}
-//             </nav>
-
-//             {/* Search and Actions */}
-//             <div className='flex items-center space-x-3'>
-//               <div className='relative hidden md:block' ref={searchRef}>
-//                 <form onSubmit={handleSearch} className='relative'>
-//                   <input
-//                     type='text'
-//                     value={searchQuery}
-//                     onChange={(e) => {
-//                       setSearchQuery(e.target.value);
-//                       setShowSearchSuggestions(!!e.target.value);
-//                     }}
-//                     onFocus={() =>
-//                       searchQuery && setShowSearchSuggestions(true)
-//                     }
-//                     placeholder='Search products...'
-//                     className='w-64 px-4 pl-10 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200'
-//                   />
-//                   <Search className='absolute left-3 top-2.5 h-5 w-5 text-gray-400' />
-//                 </form>
-
-//                 {showSearchSuggestions && searchQuery && (
-//                   <div className='absolute z-10 mt-1 w-full rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5'>
-//                     <div className='py-1'>
-//                       <div className='px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400'>
-//                         Popular Searches
-//                       </div>
-//                       {popularSearches
-//                         .filter((item) =>
-//                           item.toLowerCase().includes(searchQuery.toLowerCase())
-//                         )
-//                         .map((item, index) => (
-//                           <button
-//                             key={index}
-//                             onClick={() => {
-//                               navigate(`/search?q=${encodeURIComponent(item)}`);
-//                               setSearchQuery('');
-//                               setShowSearchSuggestions(false);
-//                             }}
-//                             className='block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                             {item}
-//                           </button>
-//                         ))}
-//                     </div>
-//                   </div>
-//                 )}
-//               </div>
-
-//               <button
-//                 onClick={toggleTheme}
-//                 className='p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-//                 aria-label={
-//                   theme === 'dark'
-//                     ? 'Switch to light mode'
-//                     : 'Switch to dark mode'
-//                 }>
-//                 {theme === 'dark' ? (
-//                   <Sun className='h-5 w-5' />
-//                 ) : (
-//                   <Moon className='h-5 w-5' />
-//                 )}
-//               </button>
-
-//               <Link
-//                 to='/cart'
-//                 className='p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative'
-//                 aria-label={`Shopping cart with ${cartCount} items`}>
-//                 <ShoppingCart className='h-5 w-5' />
-//                 {cartCount > 0 && (
-//                   <span className='absolute -top-1 -right-1 bg-primary-600 text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center'>
-//                     {cartCount > 9 ? '9+' : cartCount}
-//                   </span>
-//                 )}
-//               </Link>
-
-//               {isAuthenticated ? (
-//                 <div className='relative' ref={userMenuRef}>
-//                   <button
-//                     onClick={() => setShowUserMenu(!showUserMenu)}
-//                     className='flex items-center text-sm rounded-full focus:outline-none'
-//                     aria-haspopup='true'>
-//                     <div className='h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400'>
-//                       {user?.name ? (
-//                         user.name.charAt(0).toUpperCase()
-//                       ) : (
-//                         <UserIcon className='h-4 w-4' />
-//                       )}
-//                     </div>
-//                   </button>
-
-//                   {showUserMenu && (
-//                     <div className='origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50'>
-//                       <div className='py-1'>
-//                         <div className='px-4 py-2 border-b border-gray-100 dark:border-gray-700'>
-//                           <p className='text-sm font-medium text-gray-900 dark:text-white'>
-//                             {user?.name || 'My Account'}
-//                           </p>
-//                           <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-//                             {user?.email || ''}
-//                           </p>
-//                         </div>
-//                         <Link
-//                           to='/account'
-//                           className='flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                           <UserIcon className='mr-3 h-5 w-5 text-gray-400' />
-//                           My Profile
-//                         </Link>
-//                         <Link
-//                           to='/account/orders'
-//                           className='flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                           <ShoppingCart className='mr-3 h-5 w-5 text-gray-400' />
-//                           My Orders
-//                         </Link>
-//                         <Link
-//                           to='/account/wishlist'
-//                           className='flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                           <Heart className='mr-3 h-5 w-5 text-gray-400' />
-//                           Wishlist
-//                         </Link>
-//                         <Link
-//                           to='/account/settings'
-//                           className='flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                           <Settings className='mr-3 h-5 w-5 text-gray-400' />
-//                           Settings
-//                         </Link>
-//                         <button
-//                           onClick={() => {
-//                             logout();
-//                             setShowUserMenu(false);
-//                           }}
-//                           className='flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700'>
-//                           <LogOut className='mr-3 h-5 w-5 text-red-400' />
-//                           Sign out
-//                         </button>
-//                       </div>
-//                     </div>
-//                   )}
-//                 </div>
-//               ) : (
-//                 <div className='hidden md:flex items-center space-x-2'>
-//                   <Link
-//                     to='/login'
-//                     className='px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400'>
-//                     Sign in
-//                   </Link>
-//                   <Link
-//                     to='/register'
-//                     className='px-3 py-1.5 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700'>
-//                     Sign up
-//                   </Link>
-//                 </div>
-//               )}
-
-//               {/* Mobile menu button */}
-//               <button
-//                 className='lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-//                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-//                 aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}>
-//                 {isMobileMenuOpen ? (
-//                   <X className='h-6 w-6' />
-//                 ) : (
-//                   <Menu className='h-6 w-6' />
-//                 )}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Mobile Menu */}
-//         <div
-//           className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
-//             isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-//           }`}>
-//           <div className='px-4 pt-2 pb-4 border-t border-gray-200 dark:border-gray-800'>
-//             <form onSubmit={handleSearch} className='mb-4 relative'>
-//               <input
-//                 type='text'
-//                 value={searchQuery}
-//                 onChange={(e) => setSearchQuery(e.target.value)}
-//                 placeholder='Search products...'
-//                 className='w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500/50'
-//               />
-//               <Search className='absolute left-3 top-2.5 h-5 w-5 text-gray-400' />
-//             </form>
-
-//             <nav className='space-y-1'>
-//               {navLinks.map((link) => (
-//                 <div key={link.path}>
-//                   <Link
-//                     to={link.path}
-//                     className={`flex items-center justify-between px-3 py-2 text-base font-medium rounded-md ${
-//                       location.pathname === link.path
-//                         ? 'bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400'
-//                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-//                     }`}>
-//                     {link.name}
-//                     {link.submenu && <ChevronDown className='h-4 w-4' />}
-//                   </Link>
-//                   {link.submenu && (
-//                     <div className='pl-4 mt-1 space-y-1'>
-//                       {link.submenu.map((subItem) => (
-//                         <Link
-//                           key={subItem.path}
-//                           to={subItem.path}
-//                           className='block px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'>
-//                           {subItem.name}
-//                         </Link>
-//                       ))}
-//                     </div>
-//                   )}
-//                 </div>
-//               ))}
-//             </nav>
-
-//             {!isAuthenticated && (
-//               <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-800'>
-//                 <Link
-//                   to='/login'
-//                   className='w-full flex justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 mb-2'>
-//                   Sign in
-//                 </Link>
-//                 <Link
-//                   to='/register'
-//                   className='w-full flex justify-center px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 border border-primary-600 dark:border-primary-400 rounded-md hover:bg-primary-50 dark:hover:bg-gray-800'>
-//                   Create account
-//                 </Link>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </header>
-//   );
-// };
-
-// export default Header;

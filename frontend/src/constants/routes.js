@@ -50,21 +50,21 @@ export const ROUTES = {
     ADMIN_ADD_CATEGORY: '/dashboard/admin/categories/new',
     ADMIN_EDIT_CATEGORY: '/dashboard/admin/categories/:id/edit',
 
-    // Seller routes
-    SELLER: '/dashboard/seller',
-    SELLER_PRODUCTS: '/dashboard/seller/products',
-    SELLER_PRODUCT_NEW: '/dashboard/seller/products/new',
-    SELLER_PRODUCT_DETAILS: '/dashboard/seller/products/:productId',
-    SELLER_ORDERS: '/dashboard/seller/orders',
-    SELLER_ORDER_DETAILS: '/dashboard/seller/orders/:orderId',
-    SELLER_ANALYTICS: '/dashboard/seller/analytics',
+    // Vendor routes
+    VENDOR: '/dashboard/vendor',
+    VENDOR_PRODUCTS: '/dashboard/vendor/products',
+    VENDOR_PRODUCT_NEW: '/dashboard/vendor/products/new',
+    VENDOR_PRODUCT_DETAILS: '/dashboard/vendor/products/:productId',
+    VENDOR_ORDERS: '/dashboard/vendor/orders',
+    VENDOR_ORDER_DETAILS: '/dashboard/vendor/orders/:orderId',
+    VENDOR_ANALYTICS: '/dashboard/vendor/analytics',
 
-    // Buyer routes
-    BUYER: '/dashboard/buyer',
-    BUYER_ORDERS: '/dashboard/buyer/orders',
-    BUYER_WISHLIST: '/dashboard/buyer/wishlist',
-    BUYER_ADDRESSES: '/dashboard/buyer/addresses',
-    BUYER_PAYMENTS: '/dashboard/buyer/payments',
+    // Customer routes
+    CUSTOMER: '/dashboard/customer',
+    CUSTOMER_ORDERS: '/dashboard/customer/orders',
+    CUSTOMER_WISHLIST: '/dashboard/customer/wishlist',
+    CUSTOMER_ADDRESSES: '/dashboard/customer/addresses',
+    CUSTOMER_PAYMENTS: '/dashboard/customer/payments',
   },
 
   // Profile sub-routes
@@ -122,23 +122,27 @@ export const DASHBOARD_LINKS = {
       icon: 'BarChart2',
     },
   ],
-  seller: [
-    { name: 'Overview', path: '/dashboard/seller', icon: 'LayoutDashboard' },
-    { name: 'Products', path: '/dashboard/seller/products', icon: 'Package' },
-    { name: 'Orders', path: '/dashboard/seller/orders', icon: 'ShoppingBag' },
+  vendor: [
+    { name: 'Overview', path: '/dashboard/vendor', icon: 'LayoutDashboard' },
+    { name: 'Products', path: '/dashboard/vendor/products', icon: 'Package' },
+    { name: 'Orders', path: '/dashboard/vendor/orders', icon: 'ShoppingBag' },
     {
       name: 'Analytics',
-      path: '/dashboard/seller/analytics',
+      path: '/dashboard/vendor/analytics',
       icon: 'BarChart2',
     },
   ],
-  buyer: [
-    { name: 'Orders', path: '/dashboard/buyer/orders', icon: 'ShoppingBag' },
-    { name: 'Wishlist', path: '/dashboard/buyer/wishlist', icon: 'Heart' },
-    { name: 'Addresses', path: '/dashboard/buyer/addresses', icon: 'MapPin' },
+  customer: [
+    { name: 'Orders', path: '/dashboard/customer/orders', icon: 'ShoppingBag' },
+    { name: 'Wishlist', path: '/dashboard/customer/wishlist', icon: 'Heart' },
+    {
+      name: 'Addresses',
+      path: '/dashboard/customer/addresses',
+      icon: 'MapPin',
+    },
     {
       name: 'Payment Methods',
-      path: '/dashboard/buyer/payments',
+      path: '/dashboard/customer/payments',
       icon: 'CreditCard',
     },
   ],
@@ -169,19 +173,19 @@ export const USER_MENU_ITEMS = {
       divider: true,
     },
   ],
-  seller: [
+  vendor: [
     {
-      name: 'Seller Dashboard',
-      path: '/dashboard/seller',
+      name: 'Vendor Dashboard',
+      path: '/dashboard/vendor',
       icon: 'BarChart2',
-      description: 'Seller overview',
+      description: 'Vendor overview',
       divider: true,
     },
   ],
-  buyer: [
+  customer: [
     {
       name: 'My Orders',
-      path: '/dashboard/buyer/orders',
+      path: '/dashboard/customer/orders',
       icon: 'ShoppingBag',
       description: 'Track and manage orders',
       divider: true,
@@ -212,8 +216,13 @@ export const USER_MENU_ITEMS = {
 
 export const PROTECTED_ROUTES = {
   admin: ['/dashboard/admin', '/dashboard/admin/*'],
-  seller: ['/dashboard/seller', '/dashboard/seller/*'],
-  buyer: ['/dashboard/buyer', '/dashboard/buyer/*', '/profile', '/settings'],
+  vendor: ['/dashboard/vendor', '/dashboard/vendor/*'],
+  customer: [
+    '/dashboard/customer',
+    '/dashboard/customer/*',
+    '/profile',
+    '/settings',
+  ],
 };
 
 export const PUBLIC_ROUTES = [

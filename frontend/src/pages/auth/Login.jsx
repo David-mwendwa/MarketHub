@@ -24,15 +24,15 @@ const TEST_CREDENTIALS = {
     password: 'Admin@123',
   },
   vendor: {
-    firstName: 'Premium',
-    lastName: 'Vendor',
+    firstName: 'Vendor',
+    lastName: 'User',
     email: 'vendor@marketplace.test',
     password: 'Vendor@123',
   },
-  user: {
-    firstName: 'Default',
+  customer: {
+    firstName: 'Customer',
     lastName: 'User',
-    email: 'user@marketplace.test',
+    email: 'customer@marketplace.test',
     password: 'User@123',
   },
 };
@@ -42,7 +42,7 @@ const Login = () => {
     email: '',
     password: '',
     rememberMe: false,
-    role: 'buyer',
+    role: 'customer',
   });
   const [showRoleSelector, setShowRoleSelector] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -101,8 +101,8 @@ const Login = () => {
       if (from === '/' || from.startsWith('/auth')) {
         if (user?.role === 'admin') {
           redirectPath = '/dashboard/admin';
-        } else if (user?.role === 'seller') {
-          redirectPath = '/dashboard/seller';
+        } else if (user?.role === 'vendor') {
+          redirectPath = '/dashboard/vendor';
         } else {
           // Default for buyers or other roles
           redirectPath = '/';
@@ -183,24 +183,24 @@ const Login = () => {
                 </div>
               </div>
               <div
-                className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer border-2 border-dashed border-blue-300 dark:border-blue-900/50'
+                className='flex items-center justify-between p-2 px-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer border-2 border-dashed border-blue-300 dark:border-blue-900/50 overflow-hidden'
                 onClick={() => setShowRoleSelector(!showRoleSelector)}>
-                <div className='flex items-center'>
-                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    <span className='capitalize font-semibold text-blue-600 dark:text-blue-400'>
+                <div className='flex items-center min-w-0 flex-1'>
+                  <div className='flex items-center min-w-0'>
+                    <span className='capitalize font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap text-sm'>
                       {formData.role}
                     </span>
-                    <span className='ml-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 rounded-full'>
+                    <span className='ml-2.5 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0'>
                       {TEST_CREDENTIALS[formData.role]?.name ||
                         'Custom Account'}
                     </span>
                     {TEST_CREDENTIALS[formData.role]?.email ===
                       formData.email && (
-                      <span className='ml-2 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 px-2 py-0.5 rounded-full'>
-                        Test Credentials Loaded
+                      <span className='ml-2 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 px-2.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0'>
+                        Credentials Loaded
                       </span>
                     )}
-                  </span>
+                  </div>
                 </div>
                 <svg
                   className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${
@@ -235,9 +235,9 @@ const Login = () => {
                         }`}
                         onClick={() => handleRoleSelect(role)}>
                         <div className='flex items-center w-full justify-between'>
-                          <div className='flex items-center'>
+                          <div className='flex items-center min-w-0'>
                             <div
-                              className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${
+                              className={`w-5 h-5 rounded-full border-2 mr-3 flex-shrink-0 flex items-center justify-center ${
                                 formData.role === role
                                   ? 'border-primary-500 bg-primary-500'
                                   : 'border-gray-300 dark:border-gray-600'
@@ -246,17 +246,17 @@ const Login = () => {
                                 <div className='w-2.5 h-2.5 rounded-full bg-white' />
                               )}
                             </div>
-                            <div>
-                              <div className='text-sm font-medium text-gray-700 dark:text-gray-300 capitalize'>
-                                {role}
+                            <div className='min-w-0'>
+                              <div className='text-sm font-medium text-gray-700 dark:text-gray-300 capitalize truncate'>
+                                {credential.firstName} {credential.lastName}
                               </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
+                              <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
                                 {credential.email}
                               </div>
                             </div>
                           </div>
-                          <span className='text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50'>
-                            Auto-fill Test Credentials
+                          <span className='text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50 whitespace-nowrap ml-2'>
+                            Use {role}
                           </span>
                         </div>
                       </div>
