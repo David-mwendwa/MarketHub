@@ -94,6 +94,7 @@ export const WishlistProvider = ({ children }) => {
           '/placeholder-product.jpg',
         sku: product.sku,
         stock: product.stock?.qty || 0,
+        addedDate: new Date().toISOString(),
         ...product,
       },
     });
