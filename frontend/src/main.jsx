@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { UserProvider } from './contexts/UserContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import App from './App';
 import './index.css';
@@ -18,24 +19,26 @@ root.render(
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <Toaster
-                  position='top-right'
-                  toastOptions={{
-                    duration: 3000,
-                    style: {
-                      background: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))',
-                      border: '1px solid hsl(var(--border))',
-                      boxShadow:
-                        '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                    },
-                  }}
-                />
-                <App />
-              </WishlistProvider>
-            </CartProvider>
+            <UserProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <Toaster
+                    position='top-right'
+                    toastOptions={{
+                      duration: 3000,
+                      style: {
+                        background: 'hsl(var(--background))',
+                        color: 'hsl(var(--foreground))',
+                        border: '1px solid hsl(var(--border))',
+                        boxShadow:
+                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      },
+                    }}
+                  />
+                  <App />
+                </WishlistProvider>
+              </CartProvider>
+            </UserProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

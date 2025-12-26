@@ -475,7 +475,7 @@ const Addresses = () => {
   };
 
   return (
-    <div className='container mx-auto px-4 py-6 sm:px-6 lg:px-8'>
+    <div className='w-full px-0 py-6'>
       <div className='mb-8 flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0'>
         <div>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
