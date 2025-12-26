@@ -3,9 +3,7 @@ import { productsAPI } from '../lib/api';
 export const productService = {
   getProducts: async (params = {}) => {
     try {
-      console.log('Fetching products with params:', params); // Log the params
       const response = await productsAPI.getAll(params);
-      console.log('Raw API response:', response); // Log raw response
       return response;
     } catch (error) {
       console.error('Error in productService.getProducts:', error);

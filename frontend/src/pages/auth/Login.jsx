@@ -33,7 +33,7 @@ const TEST_CREDENTIALS = {
     firstName: 'Customer',
     lastName: 'User',
     email: 'customer@marketplace.test',
-    password: 'User@123',
+    password: 'Customer@123',
   },
 };
 

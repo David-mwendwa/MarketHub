@@ -143,17 +143,47 @@ export const getUserProfile = async (req, res) => {
 };
 
 // Update / Change password => /api/v1/password/update
-export const updatePassword = async (req, res) => {
-  const user = await User.findById(req.user.id).select('+password');
+export const updatePassword = async (req, res, next) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  // check previous user password
-  const isMatched = await user.comparePassword(req.body.oldPassword);
-  if (!isMatched) {
-    throw new BadRequestError('old password is incorrect');
+  // Basic validation
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return next(
+      new BadRequestError(
+        'Please provide current password, new password, and confirm password'
+      )
+    );
   }
-  user.password = req.body.newPassword;
-  await user.save();
-  sendToken(user, StatusCodes.OK, res);
+  try {
+    // Find user with password field
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return next(new BadRequestError('User not found'));
+    }
+    // Verify current password
+    const isMatched = await user.comparePassword(currentPassword);
+    if (!isMatched) {
+      return next(new BadRequestError('Current password is incorrect'));
+    }
+    // Validate new password matches confirm password
+    if (newPassword !== confirmPassword) {
+      return next(
+        new BadRequestError('New password and confirm password do not match')
+      );
+    }
+    // Set both password and passwordConfirm to pass validation
+    user.password = newPassword;
+    user.passwordConfirm = newPassword; // Add this line
+    user.passwordChangedAt = Date.now();
+
+    // Save the user (this will trigger the pre-save middleware)
+    await user.save();
+    // Generate new token and send response
+    sendToken(user, StatusCodes.OK, res);
+  } catch (error) {
+    console.error('Error updating password:', error);
+    next(error);
+  }
 };
 
 // Update user profile => /api/v1/me/update

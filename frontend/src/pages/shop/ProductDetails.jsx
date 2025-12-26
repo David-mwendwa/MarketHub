@@ -119,12 +119,7 @@ const ProductDetails = () => {
     }
   }, [id, fetchProduct]);
 
-  useEffect(() => {
-    if (product) {
-      console.log('Product data:', product);
-      console.log('Gallery items:', galleryItems);
-    }
-  }, [product, galleryItems]);
+  // Product and gallery items are now available in the component
 
   if (isLoading) {
     return (

@@ -19,13 +19,29 @@ export const userService = {
     }
   },
 
-  updatePassword: async (currentPassword, newPassword) => {
+  updatePassword: async ({ currentPassword, newPassword, confirmPassword }) => {
     try {
-      return await api
-        .post('/password/update', { currentPassword, newPassword })
-        .then((res) => res.data);
+      const response = await api.patch(
+        '/password/update',
+        {
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
     } catch (error) {
-      console.error('Error updating password:', error);
+      console.error('Error updating password:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        request: error.config?.data,
+      });
       throw error;
     }
   },

@@ -6,26 +6,39 @@ import {
   useEffect,
 } from 'react';
 import { userService } from '../services/user';
-import { toast } from 'react-hot-toast';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true to prevent initial flash
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const fetchProfile = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      setIsAuthenticated(false);
+      return null;
+    }
+
     try {
       setIsLoading(true);
       const userData = await userService.getMe();
       setProfile(userData);
       setError(null);
+      setIsAuthenticated(true);
       return userData;
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
       setError(err.message || 'Failed to load profile');
-      throw err;
+      setIsAuthenticated(false);
+      // Only clear token if it's an auth error
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -36,26 +49,22 @@ export const UserProvider = ({ children }) => {
       setIsLoading(true);
       const updatedProfile = await userService.updateProfile(userData);
       setProfile((prev) => ({ ...prev, ...updatedProfile }));
-      toast.success('Profile updated successfully');
       return updatedProfile;
     } catch (err) {
       console.error('Failed to update profile:', err);
-      toast.error(err.message || 'Failed to update profile');
       throw err;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const updatePassword = useCallback(async (currentPassword, newPassword) => {
+  const updatePassword = useCallback(async (passwordData) => {
     try {
       setIsLoading(true);
-      await userService.updatePassword(currentPassword, newPassword);
-      toast.success('Password updated successfully');
+      await userService.updatePassword(passwordData);
       return true;
     } catch (err) {
       console.error('Failed to update password:', err);
-      toast.error(err.message || 'Failed to update password');
       throw err;
     } finally {
       setIsLoading(false);
@@ -72,14 +81,22 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
+  // Update the useEffect to only fetch if we have a token
   useEffect(() => {
-    fetchProfile().catch(console.error);
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchProfile();
+    } else {
+      setIsLoading(false);
+      setIsAuthenticated(false);
+    }
   }, [fetchProfile]);
 
   const value = {
     profile,
     isLoading,
     error,
+    isAuthenticated,
     refreshProfile: fetchProfile,
     updateProfile,
     updatePassword,

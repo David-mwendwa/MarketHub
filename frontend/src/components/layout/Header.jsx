@@ -108,15 +108,7 @@ const Header = () => {
   } = useAuth();
   const user = authData?.user; // Extract user from the response object
 
-  // Log user object for debugging
-  useEffect(() => {
-    if (isAuthenticated && authData?.user) {
-      console.log('User object from context:', authData);
-    }
-  }, [isAuthenticated, authData]);
-
   // Auth state changes are handled internally
-  // No need for console logs in production
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -719,16 +711,9 @@ const Header = () => {
                                     onClick={(e) => {
                                       e.preventDefault();
                                       if (item.name === 'Sign Out') {
-                                        // Updated to match the new name
-                                        console.log(
-                                          '[Header] Sign out clicked'
-                                        );
+                                        // Handle sign out
                                         logout();
                                       } else {
-                                        console.log(
-                                          `[Header] Menu item clicked: ${item.name}`,
-                                          { path: item.path }
-                                        );
                                         // Navigate programmatically for better control
                                         if (item.path) {
                                           navigate(item.path);

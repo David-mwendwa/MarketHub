@@ -57,7 +57,6 @@ const Checkout = () => {
   // Redirect to cart if empty
   useEffect(() => {
     if (cartItems.length === 0 && itemCount === 0) {
-      console.log('No items in cart, redirecting to cart page');
       navigate('/cart');
     }
   }, [cartItems, itemCount, navigate]);
@@ -82,8 +81,6 @@ const Checkout = () => {
 
     try {
       // In a real app, you would send this data to your backend
-      console.log('Submitting order:', orderData);
-
       // Simulate API call
       await new Promise((resolve, reject) => {
         setTimeout(() => {

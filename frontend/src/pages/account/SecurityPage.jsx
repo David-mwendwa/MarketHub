@@ -2,11 +2,21 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '../../contexts/UserContext';
 import toast from 'react-hot-toast';
-import { Lock, Shield, Key, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  Lock,
+  Shield,
+  Key,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 
 const SecurityPage = () => {
-  const { user, updatePassword, enableTwoFactor, verifyTwoFactor } = useAuth();
+  const { user, enableTwoFactor, verifyTwoFactor } = useAuth();
+  const { updatePassword } = useUser();
   const [isLoading, setIsLoading] = useState({
     password: false,
     twoFactor: false,
@@ -20,20 +30,99 @@ const SecurityPage = () => {
     confirmPassword: '',
   });
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
 
-  const validatePassword = () => {
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return {
+      isValid:
+        password.length >= minLength &&
+        hasUpperCase &&
+        hasLowerCase &&
+        hasNumbers &&
+        hasSpecialChar,
+      requirements: {
+        minLength: password.length >= minLength,
+        hasUpperCase,
+        hasLowerCase,
+        hasNumbers,
+        hasSpecialChar,
+      },
+    };
+  };
+
+  const validateForm = () => {
     const newErrors = {};
 
-    if (passwordForm.newPassword.length < 8) {
+    if (!passwordForm.currentPassword) {
+      newErrors.currentPassword = 'Current password is required';
+    }
+
+    if (!passwordForm.newPassword) {
+      newErrors.newPassword = 'New password is required';
+    } else if (passwordForm.newPassword.length < 8) {
       newErrors.newPassword = 'Password must be at least 8 characters long';
     }
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    if (!passwordForm.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your new password';
+    } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePasswordBlur = (e) => {
+    const { name, value } = e.target;
+    if (!value) return;
+
+    if (name === 'newPassword') {
+      const { isValid } = validatePassword(value);
+      if (!isValid) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: 'Password does not meet requirements',
+        }));
+      } else if (
+        passwordForm.confirmPassword &&
+        value !== passwordForm.confirmPassword
+      ) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match',
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: '',
+          [name]: '',
+        }));
+      }
+    } else if (
+      name === 'confirmPassword' &&
+      value !== passwordForm.newPassword
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: 'Passwords do not match',
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -42,34 +131,108 @@ const SecurityPage = () => {
       ...prev,
       [name]: value,
     }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+
+    // Clear confirm password error when passwords match
+    if (name === 'newPassword' && passwordForm.confirmPassword) {
+      if (value === passwordForm.confirmPassword) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: '',
+        }));
+      }
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
-    if (!validatePassword()) {
-      return;
-    }
-
-    setIsLoading((prev) => ({ ...prev, password: true }));
-
     try {
+      // Validate all fields are filled
+      if (
+        !passwordForm.currentPassword ||
+        !passwordForm.newPassword ||
+        !passwordForm.confirmPassword
+      ) {
+        toast.error('Please fill in all fields');
+        return;
+      }
+
+      // Validate password requirements
+      const passwordValidation = validatePassword(passwordForm.newPassword);
+      if (!passwordValidation.isValid) {
+        toast.error('Please ensure your new password meets all requirements');
+        return;
+      }
+
+      // Validate passwords match
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        toast.error('New password and confirm password do not match');
+        return;
+      }
+
+      console.log('Calling updatePassword with:', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
+      });
+
+      // Show loading state
+      setIsLoading((prev) => ({ ...prev, password: true }));
+
+      // Call the update password API with an object parameter
       await updatePassword({
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword,
       });
 
+      // On success
       toast.success('Your password has been updated successfully');
+
+      // Reset the form
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
+
+      // Hide the password form
       setShowPasswordForm(false);
     } catch (error) {
-      console.error('Error updating password:', error);
-      toast.error(error.message || 'Failed to update password');
+      console.error('Error in handleChangePassword:', {
+        error,
+        response: error.response?.data,
+      });
+
+      // Show user-friendly error message
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to update password. Please try again.';
+
+      toast.error(errorMessage);
+
+      // Set specific field errors if available
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
     } finally {
+      // Reset loading state
       setIsLoading((prev) => ({ ...prev, password: false }));
     }
   };
@@ -130,35 +293,150 @@ const SecurityPage = () => {
       onClick: () => setShowPasswordForm(!showPasswordForm),
       content: showPasswordForm && (
         <form onSubmit={handleChangePassword} className='mt-4 space-y-4'>
-          <Input
-            label='Current Password'
-            name='currentPassword'
-            type='password'
-            value={passwordForm.currentPassword}
-            onChange={handlePasswordChange}
-            required
-            disabled={isLoading.password}
-          />
-          <Input
-            label='New Password'
-            name='newPassword'
-            type='password'
-            value={passwordForm.newPassword}
-            onChange={handlePasswordChange}
-            error={errors.newPassword}
-            required
-            disabled={isLoading.password}
-          />
-          <Input
-            label='Confirm New Password'
-            name='confirmPassword'
-            type='password'
-            value={passwordForm.confirmPassword}
-            onChange={handlePasswordChange}
-            error={errors.confirmPassword}
-            required
-            disabled={isLoading.password}
-          />
+          <div className='space-y-4'>
+            <div>
+              <Input
+                label='Current Password'
+                name='currentPassword'
+                type={showPassword.current ? 'text' : 'password'}
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+                onBlur={handlePasswordBlur}
+                error={errors.currentPassword}
+                required
+                disabled={isLoading.password}
+                rightIcon={
+                  <button
+                    type='button'
+                    onClick={() => togglePasswordVisibility('current')}
+                    className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'>
+                    {showPassword.current ? (
+                      <EyeOff className='h-5 w-5' />
+                    ) : (
+                      <Eye className='h-5 w-5' />
+                    )}
+                  </button>
+                }
+              />
+            </div>
+
+            <div>
+              <Input
+                label='New Password'
+                name='newPassword'
+                type={showPassword.new ? 'text' : 'password'}
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                onBlur={handlePasswordBlur}
+                error={errors.newPassword}
+                required
+                disabled={isLoading.password}
+                rightIcon={
+                  <button
+                    type='button'
+                    onClick={() => togglePasswordVisibility('new')}
+                    className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'>
+                    {showPassword.new ? (
+                      <EyeOff className='h-5 w-5' />
+                    ) : (
+                      <Eye className='h-5 w-5' />
+                    )}
+                  </button>
+                }
+              />
+              {passwordForm.newPassword && (
+                <div className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='font-medium'>Password must contain:</p>
+                  <ul className='list-disc list-inside space-y-1 mt-1'>
+                    <li
+                      className={
+                        passwordForm.newPassword.length >= 8
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }>
+                      At least 8 characters long
+                    </li>
+                    <li
+                      className={
+                        /[A-Z]/.test(passwordForm.newPassword)
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }>
+                      At least one uppercase letter
+                    </li>
+                    <li
+                      className={
+                        /[a-z]/.test(passwordForm.newPassword)
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }>
+                      At least one lowercase letter
+                    </li>
+                    <li
+                      className={
+                        /[0-9]/.test(passwordForm.newPassword)
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }>
+                      At least one number
+                    </li>
+                    <li
+                      className={
+                        /[!@#$%^&*(),.?":{}|<>]/.test(passwordForm.newPassword)
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }>
+                      At least one special character
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Input
+                label='Confirm New Password'
+                name='confirmPassword'
+                type={showPassword.confirm ? 'text' : 'password'}
+                value={passwordForm.confirmPassword}
+                onChange={(e) =>
+                  setPasswordForm({
+                    ...passwordForm,
+                    confirmPassword: e.target.value,
+                  })
+                }
+                onBlur={handlePasswordBlur}
+                error={errors.confirmPassword}
+                required
+                disabled={isLoading.password}
+                rightIcon={
+                  <button
+                    type='button'
+                    onClick={() =>
+                      setShowPassword({
+                        ...showPassword,
+                        confirm: !showPassword.confirm,
+                      })
+                    }
+                    className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'>
+                    {showPassword.confirm ? (
+                      <EyeOff className='h-5 w-5' />
+                    ) : (
+                      <Eye className='h-5 w-5' />
+                    )}
+                  </button>
+                }
+              />
+              {passwordForm.newPassword && passwordForm.confirmPassword && (
+                <div
+                  className={`mt-1 text-xs ${passwordForm.newPassword === passwordForm.confirmPassword ? 'text-green-500' : 'text-red-500'}`}>
+                  {passwordForm.newPassword === passwordForm.confirmPassword
+                    ? 'Passwords match!'
+                    : 'Passwords do not match'}
+                </div>
+              )}
+            </div>
+          </div>
           <div className='flex justify-end space-x-3 pt-2'>
             <Button
               type='button'
@@ -186,17 +464,17 @@ const SecurityPage = () => {
       icon: <Shield className='h-5 w-5 text-purple-600 dark:text-purple-400' />,
       iconBg: 'bg-purple-100 dark:bg-purple-900/30',
       title: 'Two-Factor Authentication',
-      description: user.twoFactorEnabled
+      description: user?.twoFactorEnabled
         ? 'Two-factor authentication is enabled for your account.'
         : 'Add an extra layer of security to your account',
-      action: user.twoFactorEnabled
+      action: user?.twoFactorEnabled
         ? 'Enabled'
         : showTwoFactorForm
           ? 'Verifying...'
           : 'Enable',
       onClick: handleEnableTwoFactor,
-      disabled: user.twoFactorEnabled || showTwoFactorForm,
-      status: user.twoFactorEnabled ? 'enabled' : 'disabled',
+      disabled: !user || user.twoFactorEnabled || showTwoFactorForm,
+      status: user?.twoFactorEnabled ? 'enabled' : 'disabled',
       content: showTwoFactorForm && (
         <div className='mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'>
           <div className='flex items-start'>

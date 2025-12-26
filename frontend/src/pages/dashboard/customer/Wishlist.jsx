@@ -85,7 +85,6 @@ const Wishlist = () => {
   const removeSelectedItems = (itemIds = selectedItems) => {
     setIsLoading(true);
     // In a real app, this would remove items via API
-    console.log('Removing items:', itemIds);
 
     // Simulate API call
     setTimeout(() => {
@@ -162,7 +161,6 @@ const Wishlist = () => {
 
     setIsLoading(true);
     // In a real app, this would save the note via API
-    console.log('Saving note for item:', itemId, noteText);
 
     // Simulate API call
     setTimeout(() => {

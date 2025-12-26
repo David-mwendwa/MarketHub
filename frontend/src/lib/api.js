@@ -40,10 +40,10 @@ api.interceptors.response.use(
       const { status, data } = error.response;
 
       if (status === 401) {
-        // Handle unauthorized - token expired or invalid
+        // Don't redirect here, let the component handle it
         localStorage.removeItem('token');
-        window.location.href = '/login';
-        toast.error('Session expired. Please log in again.');
+        // Return a rejected promise with the error
+        return Promise.reject(error);
       } else if (status === 403) {
         toast.error('You do not have permission to perform this action.');
       } else if (status === 404) {
@@ -51,16 +51,21 @@ api.interceptors.response.use(
       } else if (status >= 500) {
         toast.error('Server error. Please try again later.');
       } else if (data && data.message) {
-        toast.error(data.message);
+        // Don't show toast for 401 errors as they're handled by the components
+        if (status !== 401) {
+          toast.error(data.message);
+        }
       } else {
         toast.error('An error occurred. Please try again.');
       }
     } else if (error.request) {
       // The request was made but no response was received
-      toast.error('Network error. Please check your connection.');
+      toast.error('Network error. Please check your connection and try again.');
     } else {
+      // Something happened in setting up the request that triggered an Error
       toast.error('An error occurred. Please try again.');
     }
+
     return Promise.reject(error);
   }
 );

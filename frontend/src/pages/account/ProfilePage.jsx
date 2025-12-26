@@ -119,12 +119,7 @@ const ProfilePage = () => {
         formData.append('avatar', avatarFile);
       }
 
-      // Log the form data for debugging
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
-
-      // The updateProfile function from UserContext already handles the state update and shows a toast
+      // The updateProfile function from UserContext handles the state update and shows a toast
       await updateProfile(formData);
       setAvatarFile(null); // Reset avatar file state
       setIsEditing(false);
@@ -135,18 +130,6 @@ const ProfilePage = () => {
       setIsUpdating(false);
     }
   };
-
-  // Log UserContext content for debugging
-  useEffect(() => {
-    console.log('UserContext content:', {
-      profile,
-      isLoading,
-      error,
-      updateProfile,
-      updatePassword,
-      refreshToken,
-    });
-  }, [profile, isLoading, error, updateProfile, updatePassword, refreshToken]);
 
   if (!user) {
     return (

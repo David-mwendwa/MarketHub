@@ -27,7 +27,7 @@ const SettingsPage = () => {
     },
     theme: user?.preferences?.theme ?? 'system',
     language: user?.preferences?.language ?? 'en',
-    currency: user?.preferences?.currency ?? 'USD',
+    currency: user?.preferences?.currency ?? 'KES',
   });
 
   const handleNotificationChange = (key) => {
@@ -287,10 +287,10 @@ const SettingsPage = () => {
                   }))
                 }
                 className='mt-1 block w-full pl-10 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white'>
+                <option value='KES'>Kenyan Shilling (KES)</option>
                 <option value='USD'>US Dollar (USD)</option>
-                <option value='EUR'>Euro (EUR)</option>
-                <option value='GBP'>British Pound (GBP)</option>
-                <option value='JPY'>Japanese Yen (JPY)</option>
+                <option value='TZS'>Tanzanian Shilling (TZS)</option>
+                <option value='UGX'>Ugandan Shilling (UGX)</option>
               </select>
             </div>
           </div>
@@ -317,139 +317,3 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
-//                   </div>
-//                   <div>
-//                     <Label
-//                       htmlFor='email-notifications'
-//                       className='text-sm font-medium'>
-//                       Email Notifications
-//                     </Label>
-//                     <p className='text-sm text-muted-foreground'>
-//                       Receive important updates via email
-//                     </p>
-//                   </div>
-//                 </div>
-//                 <Switch
-//                   id='email-notifications'
-//                   checked={preferences.notifications.email}
-//                   onCheckedChange={() => handleNotificationChange('email')}
-//                 />
-//               </div>
-
-//               {/* SMS Notifications */}
-//               <div className='flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700'>
-//                 <div className='flex items-center space-x-3'>
-//                   <div className='rounded-full bg-blue-100 dark:bg-blue-900/30 p-2'>
-//                     <Smartphone className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-//                   </div>
-//                   <div>
-//                     <Label
-//                       htmlFor='sms-notifications'
-//                       className='text-sm font-medium'>
-//                       SMS Notifications
-//                     </Label>
-//                     <p className='text-sm text-muted-foreground'>
-//                       Receive important updates via SMS
-//                     </p>
-//                   </div>
-//                 </div>
-//                 <Switch
-//                   id='sms-notifications'
-//                   checked={preferences.notifications.sms}
-//                   onCheckedChange={() => handleNotificationChange('sms')}
-//                 />
-//               </div>
-
-//               {/* Promotional Emails */}
-//               <div className='flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700'>
-//                 <div className='flex items-center space-x-3'>
-//                   <div className='rounded-full bg-purple-100 dark:bg-purple-900/30 p-2'>
-//                     <Tag className='h-5 w-5 text-purple-600 dark:text-purple-400' />
-//                   </div>
-//                   <div>
-//                     <Label
-//                       htmlFor='promotional-emails'
-//                       className='text-sm font-medium'>
-//                       Promotional Emails
-//                     </Label>
-//                     <p className='text-sm text-muted-foreground'>
-//                       Receive special offers and promotions
-//                     </p>
-//                   </div>
-//                 </div>
-//                 <Switch
-//                   id='promotional-emails'
-//                   checked={preferences.notifications.promotions}
-//                   onCheckedChange={() => handleNotificationChange('promotions')}
-//                 />
-//               </div>
-//             </div>
-
-//             {/* Save Button */}
-//             <div className='bg-gray-50 dark:bg-gray-800/50 px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end'>
-//               <Button onClick={handleSave} disabled={isLoading}>
-//                 {isLoading ? 'Saving...' : 'Save Changes'}
-//               </Button>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Theme Preferences */}
-//         <div className='bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden'>
-//           <div className='p-6'>
-//             <h2 className='text-lg font-medium text-gray-900 dark:text-white mb-6'>
-//               Display Preferences
-//             </h2>
-
-//             <div className='space-y-4'>
-//               <div className='space-y-2'>
-//                 <Label className='text-gray-900 dark:text-white'>Theme</Label>
-//                 <div className='grid grid-cols-3 gap-3'>
-//                   {[
-//                     { value: 'light', label: 'Light' },
-//                     { value: 'dark', label: 'Dark' },
-//                     { value: 'system', label: 'System' },
-//                   ].map((theme) => (
-//                     <button
-//                       key={theme.value}
-//                       type='button'
-//                       className={`p-4 rounded-lg border ${
-//                         preferences.theme === theme.value
-//                           ? 'border-primary-500 ring-2 ring-primary-500'
-//                           : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-//                       }`}
-//                       onClick={() => handleThemeChange(theme.value)}>
-//                       <div className='flex items-center justify-center h-8 mb-2'>
-//                         <div
-//                           className={`w-6 h-6 rounded-full ${
-//                             theme.value === 'light'
-//                               ? 'bg-gray-200'
-//                               : theme.value === 'dark'
-//                                 ? 'bg-gray-800'
-//                                 : 'bg-gradient-to-r from-gray-200 to-gray-800'
-//                           }`}
-//                         />
-//                       </div>
-//                       <span className='text-sm font-medium text-gray-900 dark:text-white'>
-//                         {theme.label}
-//                       </span>
-//                     </button>
-//                   ))}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Save Button */}
-//         <div className='flex justify-end'>
-//           <Button onClick={handleSave} disabled={isLoading}>
-//             {isLoading ? 'Saving...' : 'Save Changes'}
-//           </Button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default SettingsPage;
