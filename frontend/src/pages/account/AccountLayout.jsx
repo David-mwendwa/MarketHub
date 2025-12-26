@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
-import { User, Settings, Lock, ChevronRight } from 'lucide-react';
+import { User, Settings, Lock, Bell, ChevronRight } from 'lucide-react';
 
 const AccountLayout = () => {
   const location = useLocation();
@@ -10,6 +10,11 @@ const AccountLayout = () => {
       name: 'Profile',
       path: '/account',
       icon: <User className='h-5 w-5' />,
+    },
+    {
+      name: 'Notifications',
+      path: '/account/notifications',
+      icon: <Bell className='h-5 w-5' />,
     },
     {
       name: 'Settings',

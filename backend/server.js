@@ -16,6 +16,7 @@ import xss from 'xss-clean';
 import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
+import fileUpload from 'express-fileupload';
 
 // =====================
 // GLOBAL ERROR HANDLERS
@@ -83,6 +84,18 @@ app.use(xss());
 
 // Parse cookies
 app.use(cookieParser());
+
+// File upload middleware
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    createParentPath: true,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max file size
+    abortOnLimit: true,
+    responseOnLimit: 'File size too large. Max 2MB allowed.',
+  })
+);
 
 // Prevent parameter pollution
 app.use(

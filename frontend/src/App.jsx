@@ -69,6 +69,7 @@ import Payments from './pages/dashboard/customer/Payments';
 // Account section components
 import AccountLayout from './pages/account/AccountLayout';
 import ProfilePage from './pages/account/ProfilePage';
+import NotificationsPage from './pages/account/NotificationsPage';
 import SettingsPage from './pages/account/SettingsPage';
 import SecurityPage from './pages/account/SecurityPage';
 import Wishlist from './pages/dashboard/customer/Wishlist';
@@ -118,6 +119,10 @@ function App() {
             <Route
               path={ROUTES.ACCOUNT.PROFILE.split('/').pop()}
               element={<ProfilePage />}
+            />
+            <Route
+              path={ROUTES.ACCOUNT.NOTIFICATIONS.split('/').pop()}
+              element={<NotificationsPage />}
             />
             <Route
               path={ROUTES.ACCOUNT.SETTINGS.split('/').pop()}

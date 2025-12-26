@@ -9,7 +9,10 @@ import {
 } from '../utils/customErrors.js';
 import sendToken from '../utils/jwt.js';
 import sendEmail from '../utils/sendEmail.js';
-import { upload } from '../utils/cloudinary.js';
+import {
+  uploadToCloudinary,
+  removeFromCloudinary,
+} from '../utils/cloudinary.js';
 
 // Register user => /api/v1/register
 export const registerUser = async (req, res) => {
@@ -155,30 +158,66 @@ export const updatePassword = async (req, res) => {
 
 // Update user profile => /api/v1/me/update
 export const updateProfile = async (req, res) => {
-  const newUserData = { name: req.body.name, email: req.body.email }; // TODO: should not update the role
-
-  // update avatar
-  const file = req.files.avatar;
-  if (file) {
-    const user = await User.findById(req.user.id);
-    const image_id = user.avatar.public_id;
-    await cloudinary.v2.uploader.destroy(image_id);
-    const result = await cloudinary.v2.uploader.upload(file.tempFilePath, {
-      folder: 'avatars',
-      width: 150,
-      crop: 'scale',
-    });
-    newUserData.avatar = {
-      public_id: result.public_id,
-      url: result.secure_url,
+  try {
+    const newUserData = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      phone: req.body.phone,
     };
+
+    // Handle avatar removal if requested
+    if (req.body.removeAvatar === 'true') {
+      const user = await User.findById(req.user.id);
+      if (user.avatar?.public_id) {
+        await removeFromCloudinary(user.avatar.public_id);
+        newUserData.avatar = null;
+      }
+    }
+    // Handle new avatar upload if provided
+    else if (req.files?.avatar) {
+      const user = await User.findById(req.user.id);
+      const file = req.files.avatar;
+
+      // Delete old avatar if it exists
+      if (user.avatar?.public_id) {
+        await removeFromCloudinary(user.avatar.public_id);
+      }
+
+      // Upload new avatar using the utility function
+      const result = await uploadToCloudinary(file.tempFilePath, {
+        folder: 'markethub/avatars',
+        width: 150,
+        height: 150,
+        crop: 'fill',
+        gravity: 'face',
+      });
+
+      newUserData.avatar = {
+        public_id: result.public_id,
+        url: result.secure_url,
+      };
+    }
+
+    // Update user in database
+    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+      new: true,
+      runValidators: true,
+      useFindAndModify: false,
+    }).select('-password');
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Error updating profile',
+      error: error.message,
+    });
   }
-  const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
-    new: true,
-    runValidators: true,
-    useFindAndModify: false,
-  });
-  res.status(StatusCodes.OK).json({ success: true, user });
 };
 
 // logout user => /api/v1/logout

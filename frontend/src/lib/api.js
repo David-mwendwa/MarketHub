@@ -10,13 +10,21 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and handle file uploads
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Don't set Content-Type for FormData - let the browser set it with the correct boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    } else if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     return config;
   },
   (error) => {
@@ -64,7 +72,7 @@ export const authAPI = {
   register: (userData) =>
     api.post('/register', userData).then((res) => res.data),
   getMe: () => api.get('/me').then((res) => res.data),
-  logout: () => api.post('/logout').then((res) => res.data),
+  logout: () => api.get('/logout').then((res) => res.data),
   forgotPassword: (email) =>
     api.post('/password/forgot', { email }).then((res) => res.data),
   resetPassword: (token, newPassword) =>

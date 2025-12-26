@@ -12,7 +12,7 @@ export const userService = {
 
   updateProfile: async (userData) => {
     try {
-      return await api.post('/update/me', userData).then((res) => res.data);
+      return await api.patch('/me/update', userData).then((res) => res.data);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;

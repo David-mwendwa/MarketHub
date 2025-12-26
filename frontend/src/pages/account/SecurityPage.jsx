@@ -122,7 +122,8 @@ const SecurityPage = () => {
 
   const securityItems = [
     {
-      icon: <Lock className='h-5 w-5 text-gray-500' />,
+      icon: <Lock className='h-5 w-5 text-blue-600 dark:text-blue-400' />,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
       title: 'Change Password',
       description: 'Update your account password',
       action: showPasswordForm ? 'Cancel' : 'Change',
@@ -182,7 +183,8 @@ const SecurityPage = () => {
       ),
     },
     {
-      icon: <Shield className='h-5 w-5 text-gray-500' />,
+      icon: <Shield className='h-5 w-5 text-purple-600 dark:text-purple-400' />,
+      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
       title: 'Two-Factor Authentication',
       description: user.twoFactorEnabled
         ? 'Two-factor authentication is enabled for your account.'
@@ -199,7 +201,9 @@ const SecurityPage = () => {
         <div className='mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'>
           <div className='flex items-start'>
             <div className='flex-shrink-0'>
-              <AlertCircle className='h-5 w-5 text-yellow-500' />
+              <div className='p-2 rounded-full bg-yellow-100 dark:bg-yellow-900/30'>
+                <AlertCircle className='h-5 w-5 text-yellow-600 dark:text-yellow-400' />
+              </div>
             </div>
             <div className='ml-3'>
               <h3 className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
@@ -243,7 +247,8 @@ const SecurityPage = () => {
       ),
     },
     {
-      icon: <Key className='h-5 w-5 text-gray-500' />,
+      icon: <Key className='h-5 w-5 text-green-600 dark:text-green-400' />,
+      iconBg: 'bg-green-100 dark:bg-green-900/30',
       title: 'Active Sessions',
       description: 'Manage your active login sessions',
       action: 'View',
@@ -252,7 +257,7 @@ const SecurityPage = () => {
   ];
 
   return (
-    <div className='max-w-2xl'>
+    <div className='w-full'>
       <div className='mb-8'>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
           Security
@@ -270,7 +275,7 @@ const SecurityPage = () => {
             <div className='p-6'>
               <div className='flex items-start justify-between'>
                 <div className='flex items-start space-x-4'>
-                  <div className='p-2 rounded-full bg-gray-100 dark:bg-gray-700'>
+                  <div className={`p-2 rounded-full ${item.iconBg}`}>
                     {item.icon}
                   </div>
                   <div>

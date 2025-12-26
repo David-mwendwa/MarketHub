@@ -34,6 +34,7 @@ export const ROUTES = {
   ACCOUNT: {
     BASE: '/account',
     PROFILE: '/account/profile',
+    NOTIFICATIONS: '/account/notifications',
     SETTINGS: '/account/settings',
     SECURITY: '/account/security',
   },

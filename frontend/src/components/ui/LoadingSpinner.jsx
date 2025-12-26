@@ -1,68 +1,90 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
 const LoadingSpinner = ({
   size = 'md',
   color = 'primary',
+  label = 'Loading...',
+  showLabel = false,
+  centered = false,
+  fullScreen = false,
   className = '',
   ...props
 }) => {
+  // Size classes
   const sizeClasses = {
-    xs: 'h-3 w-3',
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
-    xl: 'h-8 w-8',
+    xs: { container: 'h-3 w-3', text: 'text-xs' },
+    sm: { container: 'h-4 w-4', text: 'text-sm' },
+    md: { container: 'h-5 w-5', text: 'text-sm' },
+    lg: { container: 'h-8 w-8', text: 'text-base' },
+    xl: { container: 'h-12 w-12', text: 'text-lg' },
   };
 
+  // Color classes
   const colorClasses = {
-    primary: 'text-primary',
-    white: 'text-white',
-    gray: 'text-gray-400',
-    red: 'text-red-500',
-    green: 'text-green-500',
-    blue: 'text-blue-500',
-    yellow: 'text-yellow-500',
-    indigo: 'text-indigo-500',
-    purple: 'text-purple-500',
-    pink: 'text-pink-500',
+    primary: 'text-primary-500',
+    secondary: 'text-secondary',
+    destructive: 'text-destructive',
+    muted: 'text-muted-foreground',
+    accent: 'text-accent-foreground',
+    foreground: 'text-foreground',
+    background: 'text-background',
   };
+
+  // Animation variants
+  const spinnerVariants = {
+    pulse: 'animate-pulse',
+    bounce: 'animate-bounce',
+    ping: 'animate-ping',
+    spin: 'animate-spin',
+  };
+
+  // Container classes
+  const containerClasses = cn(
+    'inline-flex items-center gap-3 transition-all duration-300',
+    centered ? 'justify-center w-full' : 'justify-start',
+    fullScreen &&
+      'fixed inset-0 h-screen w-screen bg-background/80 backdrop-blur-sm z-50',
+    className
+  );
+
+  // Spinner container classes
+  const spinnerContainerClasses = cn(
+    'relative flex items-center justify-center',
+    sizeClasses[size]?.container || sizeClasses.md.container
+  );
+
+  // Spinner classes
+  const spinnerClasses = cn(
+    'animate-spin rounded-full border-t-2 border-b-2 border-current',
+    colorClasses[color] || colorClasses.primary,
+    'ease-linear duration-700'
+  );
+
+  // Label classes
+  const labelClasses = cn(
+    'font-medium',
+    sizeClasses[size]?.text || 'text-sm',
+    colorClasses[color] || colorClasses.primary
+  );
 
   return (
-    <div 
-      className={cn(
-        'inline-block animate-spin',
-        sizeClasses[size] || sizeClasses['md'],
-        colorClasses[color] || colorClasses['primary'],
-        className
-      )}
-      role="status"
-      {...props}
-    >
-      <span className="sr-only">Loading...</span>
-      <svg
-        className="animate-spin"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
+    <div
+      className={containerClasses}
+      role='status'
+      aria-live='polite'
+      aria-busy='true'
+      {...props}>
+      <div className={spinnerContainerClasses}>
+        <div
+          className={spinnerClasses}
+          style={{ width: '100%', height: '100%' }}>
+          <span className='sr-only'>{label}</span>
+        </div>
+      </div>
+      {showLabel && <span className={labelClasses}>{label}</span>}
     </div>
   );
 };
-
-export { LoadingSpinner };
 
 export default LoadingSpinner;
