@@ -240,6 +240,34 @@ const SecurityPage = () => {
   const handleEnableTwoFactor = async () => {
     if (user.twoFactorEnabled) return;
 
+    // Show enhanced coming soon message
+    toast(
+      <div className='flex flex-col gap-1'>
+        <div className='font-semibold text-white'>
+          🔒 Two-Factor Authentication (2FA) Coming Soon
+        </div>
+        <p className='text-sm text-gray-300'>
+          We're working hard to bring you enhanced security with 2FA. This
+          feature will add an extra layer of protection to your account.
+        </p>
+        <p className='text-xs text-gray-400 mt-1'>
+          Check back in our next update!
+        </p>
+      </div>,
+      {
+        style: {
+          borderRadius: '0.75rem',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          padding: '1rem',
+          maxWidth: '380px',
+        },
+        duration: 5000,
+      }
+    );
+
+    /*
     setIsLoading((prev) => ({ ...prev, twoFactor: true }));
 
     try {
@@ -253,6 +281,7 @@ const SecurityPage = () => {
     } finally {
       setIsLoading((prev) => ({ ...prev, twoFactor: false }));
     }
+    */
   };
 
   const handleVerifyTwoFactor = async (e) => {
@@ -530,7 +559,33 @@ const SecurityPage = () => {
       title: 'Active Sessions',
       description: 'Manage your active login sessions',
       action: 'View',
-      onClick: () => console.log('View sessions'),
+      onClick: () => {
+        toast(
+          <div className='flex flex-col gap-1'>
+            <div className='font-semibold text-white'>
+              🔐 Active Sessions Coming Soon
+            </div>
+            <p className='text-sm text-gray-300'>
+              We're developing a way for you to view and manage your active
+              login sessions across devices.
+            </p>
+            <p className='text-xs text-gray-400 mt-1'>
+              Stay tuned for this security enhancement in an upcoming update!
+            </p>
+          </div>,
+          {
+            style: {
+              borderRadius: '0.75rem',
+              background: '#111827',
+              color: '#fff',
+              border: '1px solid #374151',
+              padding: '1rem',
+              maxWidth: '380px',
+            },
+            duration: 5000,
+          }
+        );
+      },
     },
   ];
 

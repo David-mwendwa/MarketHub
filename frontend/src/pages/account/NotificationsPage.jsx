@@ -63,33 +63,41 @@ const NotificationsPage = () => {
   ]);
 
   const handleNotificationClick = (notification) => {
-    // Mark as read if unread
-    if (!notification.read) {
-      setNotifications(
-        notifications.map((n) =>
-          n.id === notification.id ? { ...n, read: true } : n
-        )
-      );
-    }
+    // Mark as read
+    setNotifications(
+      notifications.map((n) =>
+        n.id === notification.id ? { ...n, read: true } : n
+      )
+    );
 
     // Handle click based on notification type
-    switch (notification.type) {
-      case 'order':
-        toast.success('Order details will be available soon!');
-        break;
-      case 'message':
-        toast.success('Messaging feature coming soon!');
-        break;
-      case 'security':
-        toast.success('Security settings will be available soon!');
-        break;
-      case 'promotion':
-        toast.success('Viewing promotion details');
-        break;
-      default:
-        toast.success('Notification clicked');
-        break;
-    }
+    const notificationMessages = {
+      order: 'Order details will be available soon!',
+      message: 'Messaging feature coming soon!',
+      security: 'Security settings will be available soon!',
+      promotion: 'Viewing promotion details',
+    };
+
+    const message =
+      notificationMessages[notification.type] || 'Notification clicked';
+
+    toast(
+      <div className='flex flex-col gap-1'>
+        <div className='font-semibold text-white'>ℹ️ {notification.title}</div>
+        <p className='text-sm text-gray-300'>{message}</p>
+      </div>,
+      {
+        style: {
+          borderRadius: '0.75rem',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          padding: '1rem',
+          maxWidth: '380px',
+        },
+        duration: 3000,
+      }
+    );
   };
 
   const markAsRead = (id, e) => {
@@ -108,19 +116,73 @@ const NotificationsPage = () => {
         read: true,
       }))
     );
-    toast.success('All notifications marked as read');
+    toast(
+      <div className='flex flex-col gap-1'>
+        <div className='font-semibold text-white'>✓ All Read</div>
+        <p className='text-sm text-gray-300'>
+          All notifications have been marked as read.
+        </p>
+      </div>,
+      {
+        style: {
+          borderRadius: '0.75rem',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          padding: '1rem',
+          maxWidth: '380px',
+        },
+        duration: 3000,
+      }
+    );
   };
 
   const deleteNotification = (id) => {
     setNotifications(
       notifications.filter((notification) => notification.id !== id)
     );
-    toast.success('Notification deleted');
+    toast(
+      <div className='flex flex-col gap-1'>
+        <div className='font-semibold text-white'>🗑️ Notification Deleted</div>
+        <p className='text-sm text-gray-300'>
+          The notification has been removed.
+        </p>
+      </div>,
+      {
+        style: {
+          borderRadius: '0.75rem',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          padding: '1rem',
+          maxWidth: '380px',
+        },
+        duration: 3000,
+      }
+    );
   };
 
   const clearAllNotifications = () => {
     setNotifications([]);
-    toast.success('All notifications cleared');
+    toast(
+      <div className='flex flex-col gap-1'>
+        <div className='font-semibold text-white'>✖️ All Cleared</div>
+        <p className='text-sm text-gray-300'>
+          All notifications have been cleared.
+        </p>
+      </div>,
+      {
+        style: {
+          borderRadius: '0.75rem',
+          background: '#111827',
+          color: '#fff',
+          border: '1px solid #374151',
+          padding: '1rem',
+          maxWidth: '380px',
+        },
+        duration: 3000,
+      }
+    );
   };
 
   return (
