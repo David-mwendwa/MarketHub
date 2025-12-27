@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Label } from '../../../components/ui/Label';
+import { Textarea } from '../../../components/ui/Textarea';
 import {
   Select,
   SelectContent,
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import {
   Card,
@@ -26,9 +28,12 @@ import {
   regionsByCountry,
 } from '../../../constants/countries';
 import * as LucideIcons from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
+import { AlertTriangle } from 'lucide-react';
 
 // Import specific icons we need from Lucide
-const { Home, Briefcase, MapPin, HelpCircle } = LucideIcons;
+const { Home, Briefcase, MapPin, HelpCircle, Plus } = LucideIcons;
 
 // Create a mapping of icon names to their Lucide components
 const Icon = ({ name, ...props }) => {
@@ -61,78 +66,40 @@ const ADDRESS_TYPES = [
   },
 ];
 
-// Get Kenyan cities/counties from regionsByCountry
-const KENYAN_CITIES = regionsByCountry.KE.map((region) => region.label);
-
-// Mock data with Kenyan addresses
-const initialAddresses = [
-  {
-    id: 1,
-    fullName: 'Kamau Wanjiru',
-    building: 'Uchumi House',
-    street: 'Moi Avenue',
-    estate: 'CBD',
-    city: 'Nairobi',
-    zipCode: '00100',
-    country: 'Kenya',
-    countryCode: '254',
-    phone: '712345678',
-    isDefault: true,
-    type: 'home',
-  },
-  {
-    id: 2,
-    fullName: 'Amina Omondi',
-    building: 'Westgate Mall',
-    street: 'Mwanzi Road',
-    estate: 'Westlands',
-    city: 'Nairobi',
-    zipCode: '00100',
-    country: 'Kenya',
-    countryCode: '254',
-    phone: '711223344',
-    isDefault: false,
-    type: 'work',
-    description: 'Office address',
-  },
-  {
-    id: 3,
-    fullName: 'James Otieno',
-    building: 'Tuskys Mall',
-    street: 'Kisumu-Busia Road',
-    estate: 'Milimani',
-    city: 'Kisumu',
-    zipCode: '40100',
-    country: 'Kenya',
-    countryCode: '254',
-    phone: '722334455',
-    isDefault: false,
-    type: 'home',
-    description: "Parents' house",
-  },
-];
-
 const Addresses = () => {
-  const [addresses, setAddresses] = useState(initialAddresses);
+  const { profile, updateProfile, isLoading } = useUser();
+  const [addresses, setAddresses] = useState(profile?.user?.addresses || []);
   const [isEditing, setIsEditing] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    type: 'home', // 'home', 'work', or 'other'
-    description: '',
-    fullName: '',
-    countryCode: '254', // Default to Kenya
-    phone: '',
-    street: '',
-    apartment: '',
-    building: '',
-    estate: '',
-    city: '',
-    country: 'Kenya', // Default to Kenya
-    zipCode: '',
+    type: 'home',
     isDefault: false,
+    firstName: '',
+    lastName: '',
+    company: '',
+    address1: '', // street address
+    address2: '', // apartment, suite, etc.
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'Kenya',
+    countryCode: '254',
+    phone: '',
+    additionalInfo: '',
   });
   const [errors, setErrors] = useState({});
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (profile?.user?.addresses) {
+      setAddresses(profile.user.addresses);
+    }
+  }, [profile]);
+
+  console.log('PROFILE', profile);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -162,31 +129,27 @@ const Addresses = () => {
   const validateForm = () => {
     const newErrors = {};
     const requiredFields = [
-      'fullName',
-      'street',
+      'firstName',
+      'lastName',
+      'address1',
       'city',
-      'zipCode',
+      'state',
       'country',
       'phone',
     ];
 
     requiredFields.forEach((field) => {
-      if (!formData[field]) {
+      if (!formData[field]?.trim()) {
         newErrors[field] = 'This field is required';
       }
     });
 
-    // Phone number validation (simple check for digits and length)
-    if (
-      formData.phone &&
-      !/^\d{10,15}$/.test(formData.phone.replace(/[^\d]/g, ''))
-    ) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    // Postal code validation (Kenyan format - 5 digits)
-    if (formData.zipCode && !/^\d{5}$/.test(formData.zipCode)) {
-      newErrors.zipCode = 'Please enter a valid 5-digit postal code';
+    // Phone number validation (only if provided)
+    if (formData.phone) {
+      const phoneRegex = /^[0-9]{9,15}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+        newErrors.phone = 'Please enter a valid phone number';
+      }
     }
 
     setErrors(newErrors);
@@ -196,48 +159,64 @@ const Addresses = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const saveAddress = (address) => {
-        if (address.id) {
-          // Update existing address
-          const { state: _, ...addressWithoutState } = address;
-          return addresses.map((a) =>
-            a.id === address.id ? { ...a, ...addressWithoutState } : a
-          );
-        } else {
-          // Add new address
-          const { state: _, ...addressWithoutState } = address;
-          return [
-            ...addresses,
-            {
-              ...addressWithoutState,
-              id: `addr-${Date.now()}`,
-            },
-          ];
-        }
+      let updatedAddresses;
+      const newAddress = {
+        type: formData.type,
+        isDefault: formData.isDefault,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        company: formData.company?.trim() || '',
+        address1: formData.address1.trim(),
+        address2: formData.address2?.trim() || '',
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        postalCode: formData.postalCode?.trim() || '',
+        country: formData.country,
+        phone: formData.phone.trim(),
+        additionalInfo: formData.additionalInfo?.trim() || '',
       };
 
       if (isEditing) {
         // Update existing address
-        setAddresses(saveAddress(formData));
-        toast.success('Address updated successfully');
+        updatedAddresses = addresses.map((addr) =>
+          addr._id === formData._id
+            ? { ...newAddress, _id: formData._id }
+            : addr
+        );
       } else {
         // Add new address
-        setAddresses(saveAddress(formData));
-        toast.success('Address added successfully');
+        updatedAddresses = [...addresses, { ...newAddress }];
       }
 
-      // Reset form
+      // If this is set as default, update other addresses
+      if (newAddress.isDefault) {
+        updatedAddresses = updatedAddresses.map((addr) => ({
+          ...addr,
+          isDefault: addr._id === formData._id,
+        }));
+      }
+
+      // Update the profile with the updated addresses array
+      const response = await updateProfile({ addresses: updatedAddresses });
+
+      // Update local state with the response from the server
+      if (response && response.user && response.user.addresses) {
+        setAddresses(response.user.addresses);
+      } else {
+        // Fallback to local state if server response doesn't contain addresses
+        setAddresses(updatedAddresses);
+      }
+
+      toast.success(
+        isEditing
+          ? 'Address updated successfully'
+          : 'Address added successfully'
+      );
       resetForm();
     } catch (error) {
       console.error('Error saving address:', error);
@@ -250,20 +229,20 @@ const Addresses = () => {
   // Reset form to initial state
   const resetForm = () => {
     setFormData({
-      id: null,
-      fullName: '',
-      street: '',
-      apartment: '',
-      building: '',
-      estate: '',
+      type: 'home',
+      isDefault: false,
+      firstName: '',
+      lastName: '',
+      company: '',
+      address1: '',
+      address2: '',
       city: '',
-      zipCode: '',
+      state: '',
+      postalCode: '',
       country: 'Kenya',
       countryCode: '254',
       phone: '',
-      isDefault: false,
-      type: 'home',
-      description: '',
+      additionalInfo: '',
     });
     setIsEditing(null);
     setShowAddForm(false);
@@ -273,53 +252,65 @@ const Addresses = () => {
   // Edit an address
   const handleEdit = (address) => {
     setFormData({
-      id: address.id,
-      fullName: address.fullName,
-      street: address.street,
-      apartment: address.apartment || '',
-      city: address.city,
-      zipCode: address.zipCode,
-      country: address.country,
-      phone: address.phone,
-      isDefault: address.isDefault || false,
+      _id: address._id,
       type: address.type || 'home',
-      description: address.description || '',
+      isDefault: address.isDefault || false,
+      firstName: address.firstName || '',
+      lastName: address.lastName || '',
+      company: address.company || '',
+      address1: address.address1 || '',
+      address2: address.address2 || '',
+      city: address.city || '',
+      state: address.state || '',
+      postalCode: address.postalCode || '',
+      country: address.country || 'Kenya',
+      countryCode: address.countryCode || '254',
+      phone: address.phone || '',
+      additionalInfo: address.additionalInfo || '',
     });
-    setIsEditing(address.id);
+    setIsEditing(address._id);
     setShowAddForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Delete an address
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this address?')) {
-      return;
-    }
+  // Handle delete button click
+  const handleDeleteClick = (id) => {
+    setAddressToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle confirmed delete
+  const handleConfirmDelete = async () => {
+    if (!addressToDelete) return;
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+      setIsDeleting(true);
+      const updatedAddresses = addresses.filter(
+        (addr) => addr._id !== addressToDelete
+      );
+      await updateProfile({ addresses: updatedAddresses });
+      setAddresses(updatedAddresses);
       toast.success('Address deleted successfully');
+      setIsDeleteDialogOpen(false);
+      setAddressToDelete(null);
     } catch (error) {
       console.error('Error deleting address:', error);
       toast.error('Failed to delete address. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   // Set as default address
   const setAsDefault = async (id) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const updatedAddresses = addresses.map((addr) => ({
+        ...addr,
+        isDefault: addr._id === id,
+      }));
 
-      setAddresses((prev) =>
-        prev.map((addr) => ({
-          ...addr,
-          isDefault: addr.id === id,
-        }))
-      );
+      await updateProfile({ addresses: updatedAddresses });
+      setAddresses(updatedAddresses);
       toast.success('Default address updated');
     } catch (error) {
       console.error('Error updating default address:', error);
@@ -330,26 +321,39 @@ const Addresses = () => {
   // Format phone number for display based on country code
   const formatPhoneNumber = (phone, countryCode = '254') => {
     if (!phone) return '';
+
+    // Convert to string and remove all non-digit characters
     const cleaned = ('' + phone).replace(/\D/g, '');
+
+    // Remove leading 0 if present
+    const normalizedPhone = cleaned.startsWith('0')
+      ? cleaned.substring(1)
+      : cleaned;
 
     // Get country info for formatting
     const country = eastAfricanCountries.find(
       (c) => c.dialCode === `+${countryCode}`
-    ) || { dialCode: countryCode };
+    ) || { dialCode: `+${countryCode}` };
 
     // Format based on country code
     switch (country.dialCode) {
       case '+254': // Kenya
-        if (cleaned.length === 9) {
+        if (normalizedPhone.length === 9) {
           // Format as 7XX XXX XXX
-          const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
+          const match = normalizedPhone.match(/^(\d{3})(\d{3})(\d{3})$/);
           return match
             ? `${country.dialCode} ${match[1]} ${match[2]} ${match[3]}`
-            : `${country.dialCode} ${phone}`;
-        } else if (cleaned.length === 10 && cleaned.startsWith('0')) {
-          // Format as 07XX XXX XXX
-          const match = cleaned.match(/^(0\d{2})(\d{3})(\d{3})$/);
-          return match ? `${match[1]} ${match[2]} ${match[3]}` : phone;
+            : `${country.dialCode} ${normalizedPhone}`;
+        } else if (
+          normalizedPhone.length === 10 &&
+          normalizedPhone.startsWith('0')
+        ) {
+          // Handle case where number still has leading 0
+          const cleanNumber = normalizedPhone.substring(1);
+          const match = cleanNumber.match(/^(\d{2})(\d{3})(\d{3})$/);
+          return match
+            ? `${country.dialCode} ${cleanNumber[0]}${match[1]} ${match[2]} ${match[3]}`
+            : `${country.dialCode} ${cleanNumber}`;
         }
         break;
 
@@ -358,15 +362,25 @@ const Addresses = () => {
       case '+250': // Rwanda
       case '+257': // Burundi
       case '+211': // South Sudan
-      default:
-        // Default formatting for other countries
-        if (cleaned.length >= 7) {
-          // Simple formatting for other East African countries
-          return `${country.dialCode} ${cleaned}`;
+        // For other countries, just ensure country code is added once
+        if (normalizedPhone.startsWith(countryCode)) {
+          return `+${normalizedPhone}`;
         }
+        return `${country.dialCode} ${normalizedPhone}`;
+
+      default:
+        // For unknown country codes, just ensure proper formatting
+        if (normalizedPhone.startsWith(countryCode)) {
+          return `+${normalizedPhone}`;
+        }
+        return `${country.dialCode} ${normalizedPhone}`;
     }
 
-    return `${country.dialCode} ${phone}`;
+    // Fallback for any unhandled cases
+    if (normalizedPhone.startsWith(countryCode)) {
+      return `+${normalizedPhone}`;
+    }
+    return `${country.dialCode} ${normalizedPhone}`;
   };
 
   // Render address card
@@ -378,13 +392,18 @@ const Addresses = () => {
 
     return (
       <Card
-        key={address.id}
-        className='relative overflow-hidden transition-all hover:shadow-md dark:border-gray-700'>
+        key={address._id}
+        className={`relative overflow-hidden transition-all hover:shadow-md dark:border-gray-700 ${
+          address.isDefault
+            ? 'border-2 border-blue-500 dark:border-blue-600'
+            : 'border-gray-200'
+        }`}>
         {address.isDefault && (
           <div className='absolute right-0 top-0 rounded-bl-md bg-blue-600 px-3 py-1 text-xs font-medium text-white'>
             Default
           </div>
         )}
+
         <CardHeader className='pb-2'>
           <div className='flex items-center'>
             <div
@@ -393,15 +412,16 @@ const Addresses = () => {
             </div>
             <div className='ml-3'>
               <CardTitle className='text-lg font-medium text-gray-900 dark:text-white'>
-                {address.fullName}
+                {address.firstName} {address.lastName}
               </CardTitle>
               <p className='text-sm text-gray-500 dark:text-gray-400'>
-                {addressType.label}{' '}
-                {address.description ? `• ${address.description}` : ''}
+                {addressType.label}
+                {address.company && ` • ${address.company}`}
               </p>
             </div>
           </div>
         </CardHeader>
+
         <CardContent className='pt-2'>
           <div className='space-y-2 text-sm text-gray-700 dark:text-gray-300'>
             <p className='flex items-start'>
@@ -410,28 +430,29 @@ const Addresses = () => {
                 className='mr-2 h-4 w-4 flex-shrink-0 text-gray-400 mt-0.5'
               />
               <span>
-                {address.building && (
-                  <span className='block font-medium'>{address.building}</span>
-                )}
-                <span className='block'>{address.street}</span>
-                {address.estate && (
-                  <span className='block'>{address.estate}</span>
+                <span className='block'>{address.address1}</span>
+                {address.address2 && (
+                  <span className='block'>{address.address2}</span>
                 )}
               </span>
             </p>
-            <p className='flex items-center'>
+
+            <p className='flex items-start'>
               <Icon
                 name='MAP_PIN'
                 className='mr-2 h-4 w-4 flex-shrink-0 text-gray-400 opacity-0'
               />
               <span>
-                {address.city}
-                {address.zipCode && `, ${address.country}`}
-                {address.zipCode && (
-                  <span className='block text-gray-500'>{address.zipCode}</span>
+                {[address.city, address.state].filter(Boolean).join(', ')}
+                {address.postalCode && `, ${address.postalCode}`}
+                {address.country && (
+                  <span className='block text-gray-500 dark:text-gray-400'>
+                    {address.country}
+                  </span>
                 )}
               </span>
             </p>
+
             <p className='flex items-center'>
               <Icon
                 name='PHONE'
@@ -439,10 +460,18 @@ const Addresses = () => {
               />
               {formatPhoneNumber(address.phone, address.countryCode)}
             </p>
+
+            {address.additionalInfo && (
+              <div className='mt-2 rounded bg-gray-50 p-2 text-sm text-gray-600 dark:bg-gray-700/50 dark:text-gray-300'>
+                <p className='font-medium'>Delivery Instructions:</p>
+                <p>{address.additionalInfo}</p>
+              </div>
+            )}
           </div>
         </CardContent>
-        <CardFooter className='flex justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-700'>
-          <div className='flex space-x-2'>
+
+        <CardFooter className='flex flex-wrap justify-between gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-700'>
+          <div className='flex flex-wrap gap-2'>
             <Button
               variant='ghost'
               size='sm'
@@ -454,17 +483,18 @@ const Addresses = () => {
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => handleDelete(address.id)}
+              onClick={() => handleDeleteClick(address._id)}
               className='text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800'>
               <Icon name='TRASH_2' className='mr-1 h-4 w-4' />
               <span className='sr-only sm:not-sr-only sm:ml-1'>Delete</span>
             </Button>
           </div>
+
           {!address.isDefault && (
             <Button
               variant='outline'
               size='sm'
-              onClick={() => setAsDefault(address.id)}
+              onClick={() => setAsDefault(address._id)}
               className='text-sm'>
               Set as Default
             </Button>
@@ -475,7 +505,7 @@ const Addresses = () => {
   };
 
   return (
-    <div className='w-full px-0 py-6'>
+    <div className='w-full px-0'>
       <div className='mb-8 flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0'>
         <div>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
@@ -562,7 +592,7 @@ const Addresses = () => {
                 )}
               </div>
 
-              {/* 1. Location Information */}
+              {/* 1. Location Information Section */}
               <div className='space-y-6 border-t border-gray-200 pt-6 dark:border-gray-700'>
                 <div>
                   <h3 className='text-base font-medium text-gray-900 dark:text-white'>
@@ -572,107 +602,130 @@ const Addresses = () => {
                     Help us locate your address
                   </p>
                 </div>
-                <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-                  <div>
-                    <Label htmlFor='country'>Country *</Label>
-                    <Select
-                      value={formData.country}
-                      onValueChange={(value) => {
-                        handleChange({ target: { name: 'country', value } });
-                      }}>
-                      <SelectTrigger
-                        className={`mt-1 ${
-                          errors.country
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                            : ''
-                        }`}>
-                        <SelectValue placeholder='Select a country' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {eastAfricanCountries.map((country) => (
-                            <SelectItem key={country.code} value={country.name}>
-                              <div className='flex items-center'>
-                                <span className='mr-2'>{country.flag}</span>
-                                <span>{country.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    {errors.country && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.country}
+                <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+                  {/* Left Column */}
+                  <div className='space-y-6'>
+                    {/* Country */}
+                    <div>
+                      <Label htmlFor='country'>
+                        Country <span className='text-red-500'>*</span>
+                      </Label>
+                      <Select
+                        value={formData.country}
+                        onValueChange={(value) => {
+                          handleChange({ target: { name: 'country', value } });
+                        }}>
+                        <SelectTrigger
+                          className={`mt-1 ${
+                            errors.country
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                              : ''
+                          }`}>
+                          <SelectValue placeholder='Select a country' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {eastAfricanCountries.map((country) => (
+                              <SelectItem
+                                key={country.code}
+                                value={country.name}>
+                                <div className='flex items-center'>
+                                  <span className='mr-2'>{country.flag}</span>
+                                  <span>{country.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Select your country from the list
                       </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor='city'>City *</Label>
-                    <Select
-                      value={formData.city}
-                      onValueChange={(value) => {
-                        handleChange({ target: { name: 'city', value } });
-                      }}
-                      disabled={!formData.country}>
-                      <SelectTrigger
+                      {errors.country && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.country}
+                        </p>
+                      )}
+                    </div>
+                    {/* City/Area */}
+                    <div>
+                      <Label htmlFor='city'>
+                        City/Area <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='city'
+                        name='city'
+                        value={formData.city}
+                        onChange={handleChange}
                         className={`mt-1 ${
                           errors.city
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                             : ''
-                        }`}>
-                        <SelectValue placeholder='Select a city' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {formData.country ? (
-                            regionsByCountry[
-                              eastAfricanCountries.find(
-                                (c) => c.name === formData.country
-                              )?.code || 'KE'
-                            ]?.map((region) => (
-                              <SelectItem
-                                key={region.value}
-                                value={region.label}>
-                                {region.label}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value='no-country-selected' disabled>
-                              Select a country first
-                            </SelectItem>
-                          )}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    {errors.city && (
-                      <p className='mt-1 text-sm text-red-600'>{errors.city}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor='zipCode'>Postal Code *</Label>
-                    <Input
-                      id='zipCode'
-                      name='zipCode'
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                      className={`mt-1 ${
-                        errors.zipCode
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder='e.g., 00100 (GPO Nairobi)'
-                    />
-                    <p className='mt-1 text-xs text-gray-500'>
-                      Enter 5-digit postal code (e.g., 00100 for GPO Nairobi)
-                    </p>
-                    {errors.zipCode && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.zipCode}
+                        }`}
+                        placeholder='e.g., Kilimani, Westlands, Kileleshwa'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Enter your city, town, or neighborhood
                       </p>
-                    )}
+                      {errors.city && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.city}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Right Column */}
+                  <div className='space-y-6'>
+                    {/* State/Province */}
+                    <div>
+                      <Label htmlFor='state'>
+                        State/Province <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='state'
+                        name='state'
+                        value={formData.state}
+                        onChange={handleChange}
+                        className={`mt-1 ${
+                          errors.state
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : ''
+                        }`}
+                        placeholder='e.g., Nairobi, Mombasa, Coast'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Enter your state, province, or county
+                      </p>
+                      {errors.state && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.state}
+                        </p>
+                      )}
+                    </div>
+                    {/* Postal Code */}
+                    <div>
+                      <Label htmlFor='postalCode'>Postal Code (Optional)</Label>
+                      <Input
+                        id='postalCode'
+                        name='postalCode'
+                        value={formData.postalCode}
+                        onChange={handleChange}
+                        className={`mt-1 ${
+                          errors.postalCode
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : ''
+                        }`}
+                        placeholder='e.g., 00100'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Enter 5-digit postal code (e.g., 00100 for GPO Nairobi)
+                      </p>
+                      {errors.postalCode && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.postalCode}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -687,73 +740,79 @@ const Addresses = () => {
                     Where should we deliver to?
                   </p>
                 </div>
-                <div className='space-y-6'>
-                  <div>
-                    <Label htmlFor='building'>Building Name/Number *</Label>
-                    <Input
-                      id='building'
-                      name='building'
-                      value={formData.building}
-                      onChange={handleChange}
-                      className={`mt-1 ${
-                        errors.building
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder='e.g., Uchumi House, 3rd Floor'
-                    />
-                    {errors.building && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.building}
+                <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+                  {/* Left Column */}
+                  <div className='space-y-6'>
+                    {/* Street Address */}
+                    <div>
+                      <Label htmlFor='address1'>
+                        Street Address <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='address1'
+                        name='address1'
+                        value={formData.address1}
+                        onChange={handleChange}
+                        className={`mt-1 ${
+                          errors.address1
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : ''
+                        }`}
+                        placeholder='e.g., 123 Main Street'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        House number and street name
                       </p>
-                    )}
+                      {errors.address1 && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.address1}
+                        </p>
+                      )}
+                    </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor='street'>Street/Road Name *</Label>
-                    <Input
-                      id='street'
-                      name='street'
-                      value={formData.street}
-                      onChange={handleChange}
-                      className={`mt-1 ${
-                        errors.street
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder='e.g., Moi Avenue, Waiyaki Way'
-                    />
-                    {errors.street && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.street}
+                  {/* Right Column */}
+                  <div className='space-y-6'>
+                    {/* Apartment, suite, etc. */}
+                    <div>
+                      <Label htmlFor='address2'>
+                        Apartment, suite, etc. (Optional)
+                      </Label>
+                      <Input
+                        id='address2'
+                        name='address2'
+                        value={formData.address2}
+                        onChange={handleChange}
+                        placeholder='e.g., Apartment 4B, Floor 3'
+                        className='mt-1'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Apartment, suite, unit, building, floor, etc.
                       </p>
-                    )}
+                    </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor='estate'>Estate/Area *</Label>
-                    <Input
-                      id='estate'
-                      name='estate'
-                      value={formData.estate}
+                  {/* Full Width - Additional Information */}
+                  <div className='col-span-full'>
+                    <Label htmlFor='additionalInfo'>
+                      Additional Information
+                    </Label>
+                    <Textarea
+                      id='additionalInfo'
+                      name='additionalInfo'
+                      value={formData.additionalInfo}
                       onChange={handleChange}
-                      className={`mt-1 ${
-                        errors.estate
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder='e.g., Westlands, Kilimani, Runda'
+                      placeholder='Any additional delivery instructions, landmarks, or notes for the delivery person'
+                      rows={3}
+                      className='mt-1'
                     />
-                    {errors.estate && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.estate}
-                      </p>
-                    )}
+                    <p className='mt-1 text-xs text-gray-500'>
+                      e.g., "Building is behind the mall", "Call on arrival",
+                      etc.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* 2. Contact Information Section */}
+              {/* 3. Contact Information Section */}
               <div className='space-y-6 border-t border-gray-200 pt-6 dark:border-gray-700'>
                 <div>
                   <h3 className='text-base font-medium text-gray-900 dark:text-white'>
@@ -763,86 +822,141 @@ const Addresses = () => {
                     Who should we deliver to?
                   </p>
                 </div>
-                <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
-                  <div>
-                    <Label htmlFor='fullName'>Full Name *</Label>
-                    <Input
-                      id='fullName'
-                      name='fullName'
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      className={`mt-1 ${
-                        errors.fullName
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder='e.g., Amani Njoroge or Fatuma Abdi'
-                    />
-                    {errors.fullName && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.fullName}
-                      </p>
-                    )}
+                <div className='space-y-6'>
+                  {/* First Row */}
+                  <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+                    {/* First Name */}
+                    <div>
+                      <Label htmlFor='firstName'>
+                        First Name <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='firstName'
+                        name='firstName'
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        className={`mt-1 ${
+                          errors.firstName
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : ''
+                        }`}
+                        placeholder='e.g., John'
+                      />
+                      {errors.firstName && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.firstName}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Last Name */}
+                    <div>
+                      <Label htmlFor='lastName'>
+                        Last Name <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='lastName'
+                        name='lastName'
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        className={`mt-1 ${
+                          errors.lastName
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : ''
+                        }`}
+                        placeholder='e.g., Doe'
+                      />
+                      {errors.lastName && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.lastName}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor='phone'>Phone Number *</Label>
-                    <div className='mt-1 flex rounded-md shadow-sm'>
-                      <div className='relative flex-shrink-0'>
-                        <Select
-                          value={formData.countryCode}
-                          onValueChange={(value) => {
-                            handleChange({
-                              target: { name: 'countryCode', value },
-                            });
-                          }}>
-                          <SelectTrigger className='h-10 w-32 rounded-r-none border-r-0 focus:ring-1 focus:ring-inset focus:ring-blue-500'>
-                            <SelectValue placeholder='Code' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {eastAfricanCountries.map((country) => (
-                                <SelectItem
-                                  key={country.code}
-                                  value={country.dialCode.replace('+', '')}>
-                                  <div className='flex items-center'>
-                                    <span className='mr-2'>{country.flag}</span>
-                                    <span className='mr-2'>
-                                      {country.dialCode}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
+                  {/* Second Row */}
+                  <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+                    {/* Phone Number */}
+                    <div>
+                      <Label htmlFor='phone'>
+                        Phone Number <span className='text-red-500'>*</span>
+                      </Label>
+                      <div className='mt-1 flex rounded-md shadow-sm'>
+                        <div className='relative flex-shrink-0'>
+                          <Select
+                            value={formData.countryCode}
+                            onValueChange={(value) => {
+                              handleChange({
+                                target: { name: 'countryCode', value },
+                              });
+                            }}>
+                            <SelectTrigger className='h-10 w-32 rounded-r-none border-r-0 focus:ring-1 focus:ring-inset focus:ring-blue-500'>
+                              <SelectValue placeholder='🇰🇪 +254' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {eastAfricanCountries.map((country) => (
+                                  <SelectItem
+                                    key={country.code}
+                                    value={country.dialCode.replace('+', '')}>
+                                    <div className='flex items-center'>
+                                      <span className='mr-2'>
+                                        {country.flag}
+                                      </span>
+                                      <span className='mr-2'>
+                                        {country.dialCode}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='relative flex-1'>
+                          <Input
+                            id='phone'
+                            name='phone'
+                            type='tel'
+                            value={formData.phone}
+                            onChange={handleChange}
+                            className={`block w-full rounded-l-none ${
+                              errors.phone
+                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                                : ''
+                            }`}
+                            placeholder='712 345 678'
+                          />
+                        </div>
                       </div>
-                      <div className='relative flex-1'>
-                        <Input
-                          id='phone'
-                          name='phone'
-                          type='tel'
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder='700 123456'
-                          className={`rounded-l-none pl-3 ${errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                        />
-                      </div>
-                    </div>
-                    <p className='mt-1 text-xs text-gray-500'>
-                      {formData.countryCode === '254'
-                        ? 'Format: 7XX XXX XXX or 07XX XXX XXX'
-                        : 'Enter your phone number'}
-                    </p>
-                    {errors.phone && (
-                      <p className='mt-1 text-sm text-red-600'>
-                        {errors.phone}
+                      <p className='mt-1 text-xs text-gray-500'>
+                        Format: 7XX XXX XXX or 07XX XXX XXX
                       </p>
-                    )}
+                      {errors.phone && (
+                        <p className='mt-1 text-sm text-red-600'>
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Company */}
+                    <div>
+                      <Label htmlFor='company'>Company (Optional)</Label>
+                      <Input
+                        id='company'
+                        name='company'
+                        value={formData.company}
+                        onChange={handleChange}
+                        placeholder='Your company name'
+                        className='mt-1'
+                      />
+                      <p className='mt-1 text-xs text-gray-500'>
+                        If this is a business address
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-
               {/* Default Address Toggle */}
               <div className='mt-6 space-y-6 border-t border-gray-200 pt-6 dark:border-gray-700'>
                 <div className='flex items-center space-x-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50'>
@@ -894,41 +1008,47 @@ const Addresses = () => {
 
       {/* Address List */}
       <div className='space-y-6'>
-        {addresses.length === 0 && !showAddForm ? (
-          <Card className='text-center'>
-            <CardContent className='py-16'>
-              <div className='mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30'>
-                <Icon
-                  name='MAP_PIN'
-                  className='h-8 w-8 text-blue-600 dark:text-blue-400'
-                />
-              </div>
-              <h3 className='mt-4 text-lg font-medium text-gray-900 dark:text-white'>
-                No saved addresses
-              </h3>
-              <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-                You haven't added any addresses yet. Add your first address to
-                get started.
-              </p>
-              <div className='mt-6'>
-                <Button
-                  onClick={() => {
-                    resetForm();
-                    setShowAddForm(true);
-                  }}
-                  size='lg'>
-                  <Icon name='PLUS' className='mr-2 h-4 w-4' />
-                  Add Your First Address
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <div className='flex justify-center items-center py-12'>
+            <LoadingSpinner />
+          </div>
+        ) : addresses.length === 0 ? (
+          <div className='text-center py-8 px-4 sm:px-6 lg:px-8 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700'>
+            <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-3'>
+              <MapPin className='h-6 w-6 text-gray-400' />
+            </div>
+            <h3 className='text-base font-medium text-gray-900 dark:text-white mb-1.5'>
+              No addresses saved
+            </h3>
+            <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto'>
+              Get started by adding a new address.
+            </p>
+          </div>
         ) : (
-          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'>
-            {addresses.map(renderAddressCard)}
+          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+            {addresses.map((address) => (
+              <div key={address._id} className='relative'>
+                {renderAddressCard(address)}
+              </div>
+            ))}
           </div>
         )}
       </div>
+      <ConfirmationDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setIsDeleteDialogOpen(false);
+            setAddressToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={isDeleting}
+        title='Delete Address'
+        description='Are you sure you want to delete this address? This action cannot be undone.'
+        confirmText='Confirm'
+        variant='danger'
+      />
     </div>
   );
 };

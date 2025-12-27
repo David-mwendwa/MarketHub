@@ -188,66 +188,73 @@ export const updatePassword = async (req, res, next) => {
 
 // Update user profile => /api/v1/me/update
 export const updateProfile = async (req, res) => {
-  try {
-    const newUserData = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      phone: req.body.phone,
-    };
-
-    // Handle avatar removal if requested
-    if (req.body.removeAvatar === 'true') {
-      const user = await User.findById(req.user.id);
-      if (user.avatar?.public_id) {
-        await removeFromCloudinary(user.avatar.public_id);
-        newUserData.avatar = null;
-      }
-    }
-    // Handle new avatar upload if provided
-    else if (req.files?.avatar) {
-      const user = await User.findById(req.user.id);
-      const file = req.files.avatar;
-
-      // Delete old avatar if it exists
-      if (user.avatar?.public_id) {
-        await removeFromCloudinary(user.avatar.public_id);
-      }
-
-      // Upload new avatar using the utility function
-      const result = await uploadToCloudinary(file.tempFilePath, {
-        folder: 'markethub/avatars',
-        width: 150,
-        height: 150,
-        crop: 'fill',
-        gravity: 'face',
-      });
-
-      newUserData.avatar = {
-        public_id: result.public_id,
-        url: result.secure_url,
-      };
-    }
-
-    // Update user in database
-    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
-      new: true,
-      runValidators: true,
-      useFindAndModify: false,
-    }).select('-password');
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      user,
-    });
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+  // Get the user
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({
       success: false,
-      message: 'Error updating profile',
-      error: error.message,
+      message: 'User not found',
     });
   }
+  // Update basic user data if provided
+  if (req.body.firstName) user.firstName = req.body.firstName;
+  if (req.body.lastName) user.lastName = req.body.lastName;
+  if (req.body.email) user.email = req.body.email;
+  if (req.body.phone) user.phone = req.body.phone;
+  // Handle addresses if provided in the request
+  if (req.body.addresses && Array.isArray(req.body.addresses)) {
+    // Create a new array for addresses
+    user.addresses = req.body.addresses.map((address) => ({
+      type: address.type || 'home',
+      isDefault: Boolean(address.isDefault),
+      firstName: address.firstName || '',
+      lastName: address.lastName || '',
+      company: address.company || '',
+      address1: address.address1 || '',
+      address2: address.address2 || '',
+      city: address.city || '',
+      state: address.state || '',
+      postalCode: address.postalCode || '',
+      country: address.country || 'Kenya',
+      phone: address.phone || '',
+      additionalInfo: address.additionalInfo || '',
+      ...(address._id && { _id: address._id }),
+    }));
+  }
+  // Handle avatar removal if requested
+  if (req.body.removeAvatar === 'true' && user.avatar?.public_id) {
+    await removeFromCloudinary(user.avatar.public_id);
+    user.avatar = null;
+  }
+  // Handle new avatar upload if provided
+  else if (req.files?.avatar) {
+    const file = req.files.avatar;
+    // Delete old avatar if it exists
+    if (user.avatar?.public_id) {
+      await removeFromCloudinary(user.avatar.public_id);
+    }
+    // Upload new avatar
+    const result = await uploadToCloudinary(file.tempFilePath, {
+      folder: 'markethub/avatars',
+      width: 150,
+      height: 150,
+      crop: 'fill',
+      gravity: 'face',
+    });
+    user.avatar = {
+      public_id: result.public_id,
+      url: result.secure_url,
+    };
+  }
+  // Save the updated user with validation disabled for passwordConfirm
+  await user.save({ validateBeforeSave: false });
+
+  // Get the updated user with populated fields if needed
+  const updatedUser = await User.findById(user._id).select('-password');
+  res.status(StatusCodes.OK).json({
+    success: true,
+    user: updatedUser,
+  });
 };
 
 // logout user => /api/v1/logout

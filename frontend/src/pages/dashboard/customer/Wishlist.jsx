@@ -4,7 +4,14 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/UICard';
 import { ROUTES } from '../../../constants/routes';
 import { ICONS } from '../../../constants/icons';
-import * as LucideIcons from 'lucide-react';
+// import * as LucideIcons from 'lucide-react';
+import {
+  Heart,
+  ArrowLeft,
+  ShoppingBag,
+  X,
+  Trash2,
+} from 'lucide-react';
 import { useWishlist } from '../../../contexts/WishListContext';
 import { useCart } from '../../../contexts/CartContext';
 import { formatCurrency } from '../../../lib/utils';
@@ -235,26 +242,26 @@ const Wishlist = () => {
       </div>
 
       {items.length === 0 ? (
-        <div className='rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 dark:border-gray-700 dark:bg-gray-800'>
-          <div className='mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-blue-50 text-blue-500 dark:bg-blue-900/30 dark:text-blue-400'>
-            <Icon name='HEART' className='h-10 w-10' />
+        <div className='text-center py-8 px-4 sm:px-6 lg:px-8 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700'>
+          <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-3'>
+            <Heart className='h-6 w-6 text-gray-400' />
           </div>
-          <h3 className='mt-4 text-lg font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-base font-medium text-gray-900 dark:text-white mb-1.5'>
             Your wishlist is empty
           </h3>
-          <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+          <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto'>
             Save items you love to your wishlist and check back later.
           </p>
-          <div className='mt-6'>
-            <Button
-              asChild
-              className='bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-500 dark:focus:ring-offset-gray-800'>
-              <Link to={ROUTES.SHOP}>
-                <Icon name='SHOPPING_BAG' className='mr-2 h-4 w-4' />
-                Continue Shopping
-              </Link>
-            </Button>
-          </div>
+          <Button
+            asChild
+            variant='default'
+            size='sm'
+            className='inline-flex items-center'>
+            <Link to={ROUTES.SHOP}>
+              <ArrowLeft className='h-3.5 w-3.5 mr-1.5' />
+              Continue Shopping
+            </Link>
+          </Button>
         </div>
       ) : (
         <>
@@ -304,7 +311,7 @@ const Wishlist = () => {
                       </>
                     ) : (
                       <>
-                        <Icon name='SHOPPING_CART' className='mr-2 h-4 w-4' />
+                        <ShoppingBag className='h-4 w-4 mr-2' />
                         Add to Cart ({selectedItems.length})
                       </>
                     )}
@@ -315,7 +322,7 @@ const Wishlist = () => {
                     onClick={() => removeSelectedItems(selectedItems)}
                     disabled={isLoading}
                     className='inline-flex items-center border-red-200 text-red-600 hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:focus:ring-red-500 dark:focus:ring-offset-gray-800'>
-                    <Icon name='TRASH' className='mr-2 h-4 w-4' />
+                    <X className='h-4 w-4' />
                     Remove ({selectedItems.length})
                   </Button>
                 </div>
@@ -351,7 +358,7 @@ const Wishlist = () => {
                     }}
                     className='absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-gray-500 opacity-0 shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-red-900/50 dark:hover:text-red-400'
                     aria-label='Remove item'>
-                    <Icon name='X' className='h-4 w-4' />
+                    <X className='h-4 w-4' />
                   </button>
 
                   <div className='p-4'>
@@ -623,30 +630,26 @@ const Wishlist = () => {
 
           {/* Empty state when all items are removed */}
           {items.length === 0 && (
-            <div className='text-center py-12'>
-              <svg
-                className='mx-auto h-12 w-12 text-gray-400'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={1}
-                  d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
-                />
-              </svg>
-              <h3 className='mt-2 text-sm font-medium text-gray-900 dark:text-white'>
+            <div className='text-center py-8 px-4 sm:px-6 lg:px-8 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700'>
+              <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-3'>
+                <Heart className='h-6 w-6 text-gray-400' />
+              </div>
+              <h3 className='text-base font-medium text-gray-900 dark:text-white mb-1.5'>
                 Your wishlist is empty
               </h3>
-              <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+              <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto'>
                 The items you removed are no longer in your wishlist.
               </p>
-              <div className='mt-6'>
-                <Button asChild>
-                  <Link to={ROUTES.PRODUCTS}>Continue Shopping</Link>
-                </Button>
-              </div>
+              <Button
+                asChild
+                variant='default'
+                size='sm'
+                className='inline-flex items-center'>
+                <Link to={ROUTES.SHOP}>
+                  <ArrowLeft className='h-3.5 w-3.5 mr-1.5' />
+                  Continue Shopping
+                </Link>
+              </Button>
             </div>
           )}
         </>

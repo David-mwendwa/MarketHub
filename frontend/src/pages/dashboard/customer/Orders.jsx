@@ -18,6 +18,7 @@ import {
   TableCell,
 } from '../../../components/ui/Table';
 import { Badge } from '../../../components/ui/Badge';
+import { ArrowLeft } from 'lucide-react';
 
 // Constants
 import { ROUTES } from '../../../constants/routes';
@@ -194,38 +195,41 @@ const Orders = () => {
       </div>
 
       {filteredOrders.length === 0 ? (
-        <Card>
-          <CardContent className='py-10 text-center'>
-            <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-6 w-6 text-gray-400'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
-                />
-              </svg>
-            </div>
-            <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
-              No orders found
-            </h3>
-            <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-              {activeFilter === 'all'
-                ? "You haven't placed any orders yet."
-                : `You don't have any ${activeFilter} orders.`}
-            </p>
-            <div className='mt-6'>
-              <Button asChild>
-                <Link to={ROUTES.PRODUCTS}>Continue Shopping</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className='text-center py-8 px-4 sm:px-6 lg:px-8 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700'>
+          <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-3'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6 text-gray-400'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
+              />
+            </svg>
+          </div>
+          <h3 className='text-base font-medium text-gray-900 dark:text-white mb-1.5'>
+            No orders found
+          </h3>
+          <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto'>
+            {activeFilter === 'all'
+              ? "You haven't placed any orders yet."
+              : `You don't have any ${activeFilter} orders.`}
+          </p>
+          <Button
+            asChild
+            variant='default'
+            size='sm'
+            className='inline-flex items-center'>
+            <Link to={ROUTES.SHOP}>
+              <ArrowLeft className='h-3.5 w-3.5 mr-1.5' />
+              Continue Shopping
+            </Link>
+          </Button>
+        </div>
       ) : (
         <div className='space-y-4'>
           {filteredOrders.map((order) => (
