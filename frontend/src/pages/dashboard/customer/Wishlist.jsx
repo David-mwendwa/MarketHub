@@ -4,14 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/UICard';
 import { ROUTES } from '../../../constants/routes';
 import { ICONS } from '../../../constants/icons';
-// import * as LucideIcons from 'lucide-react';
-import {
-  Heart,
-  ArrowLeft,
-  ShoppingBag,
-  X,
-  Trash2,
-} from 'lucide-react';
+import { Heart, ArrowLeft, ShoppingBag, X, Trash2 } from 'lucide-react';
 import { useWishlist } from '../../../contexts/WishListContext';
 import { useCart } from '../../../contexts/CartContext';
 import { formatCurrency } from '../../../lib/utils';
@@ -568,7 +561,7 @@ const Wishlist = () => {
                       <Button
                         variant='outline'
                         size='sm'
-                        className='w-full sm:w-auto'
+                        className='w-full sm:w-auto text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:border-gray-600'
                         onClick={() => toggleItemSelection(item.id)}>
                         {selectedItems.includes(item.id)
                           ? 'Deselect'
@@ -578,7 +571,7 @@ const Wishlist = () => {
                         <Button
                           variant='outline'
                           size='sm'
-                          className='w-1/2 sm:w-auto min-w-[120px]'
+                          className='w-1/2 sm:w-auto min-w-[120px] text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 dark:border-blue-700'
                           onClick={(e) => {
                             e.stopPropagation();
                             handleAddToCart(item);

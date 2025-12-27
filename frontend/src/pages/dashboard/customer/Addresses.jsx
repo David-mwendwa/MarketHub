@@ -30,7 +30,7 @@ import {
 import * as LucideIcons from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Edit2, Trash2, Check } from 'lucide-react';
 
 // Import specific icons we need from Lucide
 const { Home, Briefcase, MapPin, HelpCircle, Plus } = LucideIcons;
@@ -476,16 +476,16 @@ const Addresses = () => {
               variant='ghost'
               size='sm'
               onClick={() => handleEdit(address)}
-              className='text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-gray-800'>
-              <Icon name='EDIT' className='mr-1 h-4 w-4' />
+              className='text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-gray-800/50'>
+              <Edit2 className='h-4 w-4 mr-1' />
               <span className='sr-only sm:not-sr-only sm:ml-1'>Edit</span>
             </Button>
             <Button
               variant='ghost'
               size='sm'
               onClick={() => handleDeleteClick(address._id)}
-              className='text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800'>
-              <Icon name='TRASH_2' className='mr-1 h-4 w-4' />
+              className='text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'>
+              <Trash2 className='h-4 w-4 mr-1' />
               <span className='sr-only sm:not-sr-only sm:ml-1'>Delete</span>
             </Button>
           </div>
@@ -495,7 +495,8 @@ const Addresses = () => {
               variant='outline'
               size='sm'
               onClick={() => setAsDefault(address._id)}
-              className='text-sm'>
+              className='text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30'>
+              <Check className='h-4 w-4 mr-1' />
               Set as Default
             </Button>
           )}
@@ -520,9 +521,11 @@ const Addresses = () => {
             resetForm();
             setShowAddForm(true);
           }}
-          className='w-full sm:w-auto'>
-          <Icon name='PLUS' className='mr-2 h-4 w-4' />
-          Add New Address
+          variant='default'
+          size='sm'
+          className='sm:ml-auto'>
+          <Plus className='h-4 w-4 mr-1.5' />
+          Add Address
         </Button>
       </div>
 
