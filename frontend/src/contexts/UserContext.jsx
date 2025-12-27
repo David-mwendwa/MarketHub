@@ -6,43 +6,51 @@ import {
   useEffect,
 } from 'react';
 import { userService } from '../services/user';
+import { useAuth } from './AuthContext';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with true to prevent initial flash
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const {
+    isAuthenticated,
+    user: authUser,
+    isLoading: isAuthLoading,
+  } = useAuth();
   const fetchProfile = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    if (!isAuthenticated) {
+      setProfile(null);
       setIsLoading(false);
-      setIsAuthenticated(false);
       return null;
     }
-
     try {
       setIsLoading(true);
       const userData = await userService.getMe();
       setProfile(userData);
       setError(null);
-      setIsAuthenticated(true);
       return userData;
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
       setError(err.message || 'Failed to load profile');
-      setIsAuthenticated(false);
-      // Only clear token if it's an auth error
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-      }
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthLoading) {
+      if (isAuthenticated) {
+        fetchProfile();
+      } else {
+        setProfile(null);
+        setIsLoading(false);
+      }
+    }
+  }, [isAuthenticated, isAuthLoading, fetchProfile]);
 
   const updateProfile = useCallback(async (userData) => {
     try {
@@ -81,20 +89,9 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  // Update the useEffect to only fetch if we have a token
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchProfile();
-    } else {
-      setIsLoading(false);
-      setIsAuthenticated(false);
-    }
-  }, [fetchProfile]);
-
   const value = {
     profile,
-    isLoading,
+    isLoading: isLoading || isAuthLoading,
     error,
     isAuthenticated,
     refreshProfile: fetchProfile,
