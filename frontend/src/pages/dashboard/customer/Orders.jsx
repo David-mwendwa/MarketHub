@@ -169,7 +169,7 @@ const Orders = () => {
       <div className='flex flex-col md:flex-row md:items-center md:justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>My Orders</h2>
-          <p className='text-muted-foreground'>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
             View and track your order history
           </p>
         </div>

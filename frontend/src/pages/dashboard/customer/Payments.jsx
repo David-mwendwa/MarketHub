@@ -246,7 +246,7 @@ const Payments = () => {
     <div className='space-y-6'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div className='space-y-1'>
-          <h2 className='text-2xl font-bold'>Payment Methods</h2>
+          <h2 className='text-2xl font-bold'>My Payment Methods</h2>
           <p className='text-sm text-gray-500 dark:text-gray-400'>
             Manage your saved payment methods for faster checkout.
           </p>

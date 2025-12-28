@@ -204,7 +204,7 @@ const Wishlist = () => {
           <h2 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-white'>
             My Wishlist
           </h2>
-          <p className='text-gray-500 dark:text-gray-400'>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
             {items.length} {items.length === 1 ? 'item' : 'items'} in your
             wishlist
           </p>

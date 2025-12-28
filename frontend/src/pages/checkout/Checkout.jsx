@@ -5,8 +5,10 @@ import CheckoutForm from '../../components/checkout/CheckoutForm';
 import OrderSummary from '../../components/checkout/OrderSummary';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '../../contexts/UserContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { format } from 'date-fns';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import {
   Loader2,
   ArrowLeft,
@@ -28,6 +30,8 @@ import {
 } from 'lucide-react';
 
 const Checkout = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
   // Get the full cart state
   const cartState = useCart() || {};
 
@@ -47,7 +51,23 @@ const Checkout = () => {
     orderProtection = 0,
   } = cartState;
 
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
+  const { profile, isLoading: isUserLoading } = useUser();
+
+  // Set loading to false when user and profile are loaded
+  useEffect(() => {
+    if (!isAuthLoading && !isUserLoading) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthLoading, isUserLoading]);
+
+  // Get default address if available
+  const defaultAddress = profile?.user?.addresses?.find(
+    (addr) => addr.isDefault
+  );
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -122,6 +142,16 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading || isAuthLoading || isUserLoading) {
+    return (
+      <div className='min-h-screen bg-gray-50 dark:bg-gray-900'>
+        <div className='fixed inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-40'>
+          <LoadingSpinner size='xl' centered />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -409,28 +439,14 @@ const Checkout = () => {
                     </p>
                   </div>
                 </div>
-
                 <CheckoutForm
                   onSubmit={handleSubmitOrder}
                   isSubmitting={isSubmitting}
+                  user={user}
+                  defaultAddress={defaultAddress}
                 />
               </div>
             </motion.div>
-
-            {/* Order Summary - Mobile */}
-            <div className='lg:hidden mt-6'>
-              <OrderSummary
-                key={`mobile-summary-${hasOrderProtection}`}
-                items={cartItems}
-                subtotal={subtotal}
-                shipping={shipping}
-                tax={tax}
-                total={total}
-                hasOrderProtection={hasOrderProtection}
-                orderProtection={orderProtection}
-                isCheckout={true}
-              />
-            </div>
 
             {/* Order Protection */}
             <motion.div
