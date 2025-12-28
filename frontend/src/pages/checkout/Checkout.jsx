@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import CheckoutForm from '../../components/checkout/CheckoutForm';
@@ -6,6 +8,8 @@ import OrderSummary from '../../components/checkout/OrderSummary';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
+import orderService from '../../services/order';
+import { paymentAPI } from '../../lib/api';
 import { AnimatePresence, motion } from 'framer-motion';
 import { format } from 'date-fns';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -28,6 +32,8 @@ import {
   ShoppingBag,
   Tag,
 } from 'lucide-react';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const Checkout = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -100,43 +106,81 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // In a real app, you would send this data to your backend
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulate 20% chance of error for demonstration
-          if (Math.random() < 0.2) {
-            reject(new Error('Payment processing failed. Please try again.'));
-          } else {
-            resolve();
-          }
-        }, 1500);
-      });
-
-      const order = {
-        ...orderData,
-        items: cartItems,
-        orderNumber: `ORD-${Date.now()}`,
-        status: 'processing',
-        createdAt: new Date().toISOString(),
-        subtotal: subtotal,
-        shipping: shipping,
-        tax: tax,
-        total: total,
+      // Create the order data with the correct payment method
+      const orderData = {
+        user: user?._id,
+        items: cartItems.map((item) => ({
+          product: item._id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          sku: item.sku,
+          variant: item.variant,
+        })),
+        subtotal: subtotal, // Already in the correct format
+        tax: tax, // Already in the correct format
+        shipping: shipping, // Already in the correct format
+        total: total, // Already in the correct format
+        currency: 'KES',
+        status: 'pending',
+        source: 'web',
+        payment: {
+          method: orderData.paymentMethod,
+          status: 'pending',
+          amount: {
+            subtotal: subtotal, // Already in the correct format
+            tax: tax, // Already in the correct format
+            shipping: shipping, // Already in the correct format
+            total: total, // Already in the correct format
+            currency: 'KES',
+          },
+        },
       };
 
-      // Clear cart on successful order
-      clearCart();
+      // 1. Create the order in the database
+      const order = await orderService.createOrder(orderData);
 
-      // Navigate to order confirmation
-      navigate('/order-confirmation', {
-        state: { order },
-        replace: true,
-      });
+      // 2. Initialize payment with the created order ID
+      const paymentResult = await paymentAPI.initializePayment(
+        order._id,
+        orderData.payment.method,
+        {
+          amount: {
+            subtotal: subtotal,
+            tax: tax,
+            shipping: shipping,
+            total: total,
+            currency: 'KES',
+          },
+          ...orderData,
+        }
+      );
+
+      // 3. Handle successful order creation and payment initialization
+      if (paymentResult.success) {
+        // Clear cart on successful order
+        clearCart();
+
+        // Navigate to order confirmation
+        navigate('/order-confirmation', {
+          state: {
+            order: {
+              ...order,
+              orderNumber: `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
+              status: 'processing',
+            },
+          },
+          replace: true,
+        });
+      } else {
+        throw new Error(paymentResult.message || 'Failed to process payment');
+      }
     } catch (error) {
       console.error('Error submitting order:', error);
       setError(
-        error.message || 'Failed to process your order. Please try again.'
+        error.response?.data?.message ||
+          error.message ||
+          'Failed to process your order. Please try again.'
       );
     } finally {
       setIsSubmitting(false);
@@ -439,12 +483,19 @@ const Checkout = () => {
                     </p>
                   </div>
                 </div>
-                <CheckoutForm
-                  onSubmit={handleSubmitOrder}
-                  isSubmitting={isSubmitting}
-                  user={user}
-                  defaultAddress={defaultAddress}
-                />
+                <Elements stripe={stripePromise}>
+                  <CheckoutForm
+                    onSubmit={handleSubmitOrder}
+                    isSubmitting={isSubmitting}
+                    user={user}
+                    cartItems={cartItems}
+                    defaultAddress={defaultAddress}
+                    cartTotal={total}
+                    subtotal={subtotal}
+                    tax={tax}
+                    shipping={shipping}
+                  />
+                </Elements>
               </div>
             </motion.div>
 

@@ -2,24 +2,37 @@ import express from 'express';
 import {
   newOrder,
   getSingleOrder,
-  myOrders,
-  allOrders,
-  updateOrder,
+  getUserOrders,
+  getAllOrders,
+  updateOrderStatus,
+  cancelOrder,
+  getOrderByTrackingNumber,
   deleteOrder,
 } from '../controllers/orderController.js';
 import { authenticate, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.route('/order/new').post(authenticate, newOrder);
-router.route('/orders/me').get(authenticate, myOrders);
-router.route('/order/:id').get(authenticate, getSingleOrder);
+// Public routes
+router.get('/orders/tracking/:trackingNumber', getOrderByTrackingNumber);
+
+// Protected routes
+router.use(authenticate);
+
+// Order routes
 router
-  .route('/admin/orders')
-  .get(authenticate, authorizeRoles('admin'), allOrders);
+  .route('/orders')
+  .post(newOrder)
+  .get(authorizeRoles('admin'), getAllOrders);
+
+router.route('/users/:userId/orders').get(getUserOrders);
+
 router
-  .route('/admin/order/:id')
-  .patch(authenticate, authorizeRoles('admin'), updateOrder)
-  .delete(authenticate, authorizeRoles('admin'), deleteOrder);
+  .route('/orders/:id')
+  .get(getSingleOrder)
+  .patch(updateOrderStatus)
+  .delete(authorizeRoles('admin'), deleteOrder);
+
+router.post('/orders/:id/cancel', cancelOrder);
 
 export default router;

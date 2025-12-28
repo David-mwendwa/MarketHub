@@ -10,6 +10,8 @@ import { UserProvider } from './contexts/UserContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 import App from './App';
 import './index.css';
+import { PaymentProvider } from './contexts/PaymentContext';
+import { OrderProvider } from './contexts/OrderContext';
 
 const root = createRoot(document.getElementById('root'));
 
@@ -22,20 +24,24 @@ root.render(
             <UserProvider>
               <CartProvider>
                 <WishlistProvider>
-                  <Toaster
-                    position='top-right'
-                    toastOptions={{
-                      duration: 3000,
-                      style: {
-                        background: 'hsl(var(--background))',
-                        color: 'hsl(var(--foreground))',
-                        border: '1px solid hsl(var(--border))',
-                        boxShadow:
-                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      },
-                    }}
-                  />
-                  <App />
+                  <PaymentProvider>
+                    <OrderProvider>
+                      <Toaster
+                        position='top-right'
+                        toastOptions={{
+                          duration: 3000,
+                          style: {
+                            background: 'hsl(var(--background))',
+                            color: 'hsl(var(--foreground))',
+                            border: '1px solid hsl(var(--border))',
+                            boxShadow:
+                              '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                          },
+                        }}
+                      />
+                      <App />
+                    </OrderProvider>
+                  </PaymentProvider>
                 </WishlistProvider>
               </CartProvider>
             </UserProvider>

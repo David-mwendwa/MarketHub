@@ -162,7 +162,7 @@ import paymentRoutes from './routes/payment.js';
 app.use('/api/v1', productRoutes);
 app.use('/api/v1', authRoutes);
 app.use('/api/v1', orderRoutes);
-app.use('/api/v1', paymentRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // =====================
 // SERVE STATIC FILES (Production Only)

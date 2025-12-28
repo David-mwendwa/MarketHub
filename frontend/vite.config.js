@@ -27,6 +27,11 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@/components/**', '@/pages/**'],
+    include: [
+      '@/components/**',
+      '@/pages/**',
+      '@stripe/stripe-js',
+      '@stripe/react-stripe-js',
+    ],
   },
 });

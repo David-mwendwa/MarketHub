@@ -133,5 +133,83 @@ export const usersAPI = {
       .then((res) => res.data),
 };
 
+// Payment API endpoints
+export const paymentAPI = {
+  // Get payment configuration
+  getConfig() {
+    return api.get('/payments/config');
+  },
+
+  // Get available payment methods
+  getPaymentMethods() {
+    return api.get('/payments/methods');
+  },
+
+  // Initialize payment
+  initializePayment(orderId, paymentMethod, details = {}) {
+    return api.post('/payments/initialize', {
+      orderId,
+      paymentMethod,
+      ...details,
+    });
+  },
+
+  // Check payment status
+  checkStatus(orderId) {
+    return api.get(`/payments/status/${orderId}`);
+  },
+
+  // Legacy methods (for backward compatibility)
+  mpesa: {
+    initiateSTK(phone, amount, orderId) {
+      return api.post('/payments/mpesa/stk-push', { phone, amount, orderId });
+    },
+    checkStatus(orderId) {
+      return api.get(`/payments/mpesa/status/${orderId}`);
+    },
+  },
+
+  stripe: {
+    createPaymentIntent(amount, orderId) {
+      return api.post('/payments/stripe/create-intent', { amount, orderId });
+    },
+    confirmPayment(paymentMethodId, orderId) {
+      return api.post('/payments/stripe/confirm', { paymentMethodId, orderId });
+    },
+  },
+
+  paypal: {
+    createOrder(amount, orderId) {
+      return api.post('/payments/paypal/create-order', { amount, orderId });
+    },
+    captureOrder(orderId) {
+      return api.post(`/payments/paypal/capture/${orderId}`);
+    },
+  },
+};
+
+// Order API endpoints
+export const orderAPI = {
+  // Create a new order
+  createOrder: (orderData) => api.post('/orders', orderData),
+
+  // Get order by ID
+  getOrderById: (orderId) => api.get(`/orders/${orderId}`),
+
+  // Get user's orders
+  getUserOrders: (userId) => api.get(`/users/${userId}/orders`),
+
+  // Update order status
+  updateOrderStatus: (orderId, status) =>
+    api.patch(`/orders/${orderId}/status`, { status }),
+
+  // Cancel an order
+  cancelOrder: (orderId) => api.post(`/orders/${orderId}/cancel`),
+
+  // Get order by tracking number
+  getOrderByTrackingNumber: (trackingNumber) =>
+    api.get(`/orders/tracking/${trackingNumber}`),
+};
+
 // Export the configured axios instance
 export default api;
