@@ -145,12 +145,26 @@ export const paymentAPI = {
     return api.get('/payments/methods');
   },
 
-  // Initialize payment
-  initializePayment(orderId, paymentMethod, details = {}) {
-    return api.post('/payments/initialize', {
+  // Process card payment
+  processCardPayment(orderId, paymentMethodId) {
+    return api.post('/payments/card', {
       orderId,
-      paymentMethod,
-      ...details,
+      paymentMethodId,
+    });
+  },
+
+  // Process M-Pesa payment
+  processMpesaPayment(orderId, phone) {
+    return api.post('/payments/mpesa', {
+      orderId,
+      phone,
+    });
+  },
+
+  // Process PayPal payment
+  processPayPalPayment(orderId) {
+    return api.post('/payments/paypal', {
+      orderId,
     });
   },
 
@@ -159,31 +173,64 @@ export const paymentAPI = {
     return api.get(`/payments/status/${orderId}`);
   },
 
-  // Legacy methods (for backward compatibility)
+  // Legacy methods (for backward compatibility - will be removed in future)
+  initializePayment(orderId, paymentMethod, details = {}) {
+    console.warn(
+      'initializePayment is deprecated. Use specific payment method endpoints instead.'
+    );
+    return api.post(`/payments/${paymentMethod}`, {
+      orderId,
+      ...details,
+    });
+  },
+
   mpesa: {
     initiateSTK(phone, amount, orderId) {
-      return api.post('/payments/mpesa/stk-push', { phone, amount, orderId });
+      console.warn(
+        'mpesa.initiateSTK is deprecated. Use paymentAPI.processMpesaPayment instead.'
+      );
+      return api.post('/payments/mpesa', {
+        orderId,
+        phone,
+        amount,
+      });
     },
     checkStatus(orderId) {
-      return api.get(`/payments/mpesa/status/${orderId}`);
+      return api.get(`/payments/status/${orderId}`);
     },
   },
 
   stripe: {
     createPaymentIntent(amount, orderId) {
-      return api.post('/payments/stripe/create-intent', { amount, orderId });
+      console.warn(
+        'stripe.createPaymentIntent is deprecated. Use paymentAPI.processCardPayment instead.'
+      );
+      return api.post('/payments/card', {
+        orderId,
+        amount,
+      });
     },
     confirmPayment(paymentMethodId, orderId) {
-      return api.post('/payments/stripe/confirm', { paymentMethodId, orderId });
+      return api.post('/payments/card', {
+        orderId,
+        paymentMethodId,
+      });
     },
   },
 
   paypal: {
     createOrder(amount, orderId) {
-      return api.post('/payments/paypal/create-order', { amount, orderId });
+      console.warn(
+        'paypal.createOrder is deprecated. Use paymentAPI.processPayPalPayment instead.'
+      );
+      return api.post('/payments/paypal', {
+        orderId,
+      });
     },
     captureOrder(orderId) {
-      return api.post(`/payments/paypal/capture/${orderId}`);
+      return api.post(`/payments/paypal`, {
+        orderId,
+      });
     },
   },
 };

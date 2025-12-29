@@ -62,7 +62,7 @@ import ViewOrder from './pages/dashboard/vendor/ViewOrder';
 
 import CustomerDashboard from './pages/dashboard/customer';
 import CustomerOrders from './pages/dashboard/customer/Orders';
-import OrderConfirmation from './components/order/OrderConfirmation';
+import OrderConfirmation from './components/order/OrderConfirmation.original';
 import OrderDetails from './components/order/OrderDetails';
 import Addresses from './pages/dashboard/customer/Addresses';
 import Payments from './pages/dashboard/customer/Payments';

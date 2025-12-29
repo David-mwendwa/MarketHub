@@ -1,6 +1,8 @@
 import express from 'express';
 import {
-  initializePayment,
+  processCardPayment,
+  processMpesaPayment,
+  processPayPalPayment,
   mpesaCallback,
   checkPaymentStatus,
   getPaymentMethods,
@@ -13,15 +15,17 @@ const router = express.Router();
 
 // Payment methods and config
 router.route('/methods').get(getPaymentMethods);
-
 router.route('/config').get(getPaymentConfig);
+
+// Payment processing endpoints
+router.route('/card').post(authenticate, processCardPayment);
+router.route('/mpesa').post(authenticate, mpesaAuth, processMpesaPayment);
+router.route('/paypal').post(authenticate, processPayPalPayment);
 
 // M-Pesa webhook
 router.route('/mpesa/callback').post(mpesaAuth, mpesaCallback);
 
-// Payment processing
-router.route('/initialize').post(authenticate, initializePayment);
-
+// Payment status
 router.route('/status/:orderId').get(authenticate, checkPaymentStatus);
 
 export default router;

@@ -21,13 +21,12 @@ const generateMpesaPassword = () => {
   return { password, timestamp };
 };
 
-// Initialize payment
-export const initializePayment = async (req, res) => {
+// Process card payment
+export const processCardPayment = async (req, res) => {
   try {
-    const { orderId, paymentMethod, metadata = {} } = req.body;
-    const userId = req.user.id;
-
+    const { orderId, paymentMethodId } = req.body;
     const order = await Order.findById(orderId).populate('user');
+
     if (!order) {
       return res.status(StatusCodes.NOT_FOUND).json({
         success: false,
@@ -35,36 +34,104 @@ export const initializePayment = async (req, res) => {
       });
     }
 
-    const isDemoOrder =
-      order.isTestOrder ||
-      (order.user && order.user._id.toString() === DEMO_USER_ID) ||
-      (req.user && req.user._id.toString() === DEMO_USER_ID);
+    if (order.user._id.toString() !== req.user.id) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'Not authorized to process this order',
+      });
+    }
 
-    if (isDemoOrder) {
-      return handleDemoPayment(req, res, order, paymentMethod, {
-        ...metadata,
+    // Handle demo order
+    if (order.user._id.toString() === DEMO_USER_ID) {
+      return handleDemoPayment(req, res, order, 'card', {
+        isDemo: true,
+        paymentMethodId,
+      });
+    }
+
+    return await handleCardPayment(req, res, order, { paymentMethodId });
+  } catch (error) {
+    console.error('Card payment error:', error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Error processing card payment',
+      error: error.message,
+    });
+  }
+};
+
+// Process M-Pesa payment
+export const processMpesaPayment = async (req, res) => {
+  try {
+    const { orderId, phone } = req.body;
+    const order = await Order.findById(orderId).populate('user');
+
+    if (!order) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    if (order.user._id.toString() !== req.user.id) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'Not authorized to process this order',
+      });
+    }
+
+    // Handle demo order
+    if (order.user._id.toString() === DEMO_USER_ID) {
+      return handleDemoPayment(req, res, order, 'mpesa', {
+        isDemo: true,
+        phone: phone || '254700000000',
+      });
+    }
+
+    return await handleMpesaPayment(req, res, order, { phone });
+  } catch (error) {
+    console.error('M-Pesa payment error:', error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Error processing M-Pesa payment',
+      error: error.message,
+    });
+  }
+};
+
+// Process PayPal payment
+export const processPayPalPayment = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const order = await Order.findById(orderId).populate('user');
+
+    if (!order) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        message: 'Order not found',
+      });
+    }
+
+    if (order.user._id.toString() !== req.user.id) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        message: 'Not authorized to process this order',
+      });
+    }
+
+    // Handle demo order
+    if (order.user._id.toString() === DEMO_USER_ID) {
+      return handleDemoPayment(req, res, order, 'paypal', {
         isDemo: true,
       });
     }
 
-    switch (paymentMethod) {
-      case 'card':
-        return await handleCardPayment(req, res, order, metadata);
-      case 'mpesa':
-        return await handleMpesaPayment(req, res, order, metadata);
-      case 'paypal':
-        return await handlePayPalPayment(req, res, order, metadata);
-      default:
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          success: false,
-          message: 'Unsupported payment method',
-        });
-    }
+    return await handlePayPalPayment(req, res, order, {});
   } catch (error) {
-    console.error('Payment initialization error:', error);
+    console.error('PayPal payment error:', error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: 'Error initializing payment',
+      message: 'Error processing PayPal payment',
       error: error.message,
     });
   }
@@ -497,259 +564,3 @@ export const getPaymentConfig = (req, res) => {
     });
   }
 };
-
-// import { StatusCodes } from 'http-status-codes';
-// import Stripe from 'stripe';
-// import axios from 'axios';
-// import crypto from 'crypto';
-// import { v4 as uuidv4 } from 'uuid';
-// import Order from '../models/Order.js';
-
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// // Generate M-Pesa password
-// const generateMpesaPassword = () => {
-//   const timestamp = new Date()
-//     .toISOString()
-//     .replace(/[^0-9]/g, '')
-//     .slice(0, -3);
-//   const password = Buffer.from(
-//     `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
-//   ).toString('base64');
-//   return { password, timestamp };
-// };
-
-// // M-Pesa STK Push
-// export const initiateMpesaPayment = async (req, res) => {
-//   const { phone, amount, orderId } = req.body;
-//   const { password, timestamp } = generateMpesaPassword();
-
-//   const response = await axios.post(
-//     'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-//     {
-//       BusinessShortCode: process.env.MPESA_SHORTCODE,
-//       Password: password,
-//       Timestamp: timestamp,
-//       TransactionType: 'CustomerPayBillOnline',
-//       Amount: amount,
-//       PartyA: `254${phone.substring(phone.length - 9)}`,
-//       PartyB: process.env.MPESA_SHORTCODE,
-//       PhoneNumber: `254${phone.substring(phone.length - 9)}`,
-//       CallBackURL: `${process.env.API_URL}/api/payments/mpesa/callback`,
-//       AccountReference: `Order-${orderId}`,
-//       TransactionDesc: 'MarketHub Purchase',
-//     },
-//     {
-//       headers: {
-//         Authorization: `Bearer ${req.mpesaAccessToken}`,
-//       },
-//     }
-//   );
-
-//   // Update order with payment details
-//   await Order.findByIdAndUpdate(orderId, {
-//     'payment.status': 'pending',
-//     'payment.method': 'mpesa',
-//     'payment.mpesa': {
-//       checkoutRequestId: response.data.CheckoutRequestID,
-//       merchantRequestId: response.data.MerchantRequestID,
-//       phone: `254${phone.substring(phone.length - 9)}`,
-//       amount,
-//     },
-//   });
-
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     message: 'Payment initiated successfully',
-//     checkoutRequestId: response.data.CheckoutRequestID,
-//   });
-// };
-
-// // Process Stripe Payment
-// export const processStripePayment = async (req, res) => {
-//   const { amount, orderId } = req.body;
-
-//   const paymentIntent = await stripe.paymentIntents.create({
-//     amount: amount * 100, // Convert to cents
-//     currency: 'usd',
-//     metadata: { orderId },
-//   });
-
-//   // Update order with payment intent
-//   await Order.findByIdAndUpdate(orderId, {
-//     'payment.status': 'processing',
-//     'payment.method': 'card',
-//     'payment.stripe': {
-//       paymentIntentId: paymentIntent.id,
-//       clientSecret: paymentIntent.client_secret,
-//       amount,
-//       currency: paymentIntent.currency,
-//     },
-//   });
-
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     clientSecret: paymentIntent.client_secret,
-//   });
-// };
-
-// // Process PayPal Payment
-// export const processPayPalPayment = async (req, res) => {
-//   const { amount, orderId } = req.body;
-
-//   // Create PayPal order
-//   const order = await paypal.orders.create({
-//     intent: 'CAPTURE',
-//     purchase_units: [
-//       {
-//         amount: {
-//           currency_code: 'USD',
-//           value: amount.toString(),
-//         },
-//         reference_id: orderId,
-//       },
-//     ],
-//   });
-
-//   // Update order with PayPal details
-//   await Order.findByIdAndUpdate(orderId, {
-//     'payment.status': 'pending',
-//     'payment.method': 'paypal',
-//     'payment.paypal': {
-//       orderId: order.id,
-//       status: 'CREATED',
-//       amount,
-//       currency: 'USD',
-//     },
-//   });
-
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     orderId: order.id,
-//     status: order.status,
-//   });
-// };
-
-// // Get payment config
-// export const getPaymentConfig = (req, res) => {
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     config: {
-//       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-//       paypalClientId: process.env.PAYPAL_CLIENT_ID,
-//       mpesaShortcode: process.env.MPESA_SHORTCODE,
-//     },
-//   });
-// };
-
-// // M-Pesa callback
-// export const mpesaCallback = async (req, res) => {
-//   const { Body: body } = req.body;
-//   const result = body.stkCallback;
-
-//   if (result.ResultCode === 0) {
-//     // Payment was successful
-//     const { CheckoutRequestID, CallbackMetadata } = result;
-//     const metadata = CallbackMetadata.Item.reduce((acc, item) => {
-//       acc[item.Name] = item.Value;
-//       return acc;
-//     }, {});
-
-//     // Update order status
-//     await Order.findOneAndUpdate(
-//       { 'payment.mpesa.checkoutRequestId': CheckoutRequestID },
-//       {
-//         'payment.status': 'completed',
-//         'payment.mpesa.receiptNumber': metadata.MpesaReceiptNumber,
-//         'payment.mpesa.transactionDate': metadata.TransactionDate,
-//         'payment.mpesa.amount': metadata.Amount,
-//         status: 'processing',
-//       }
-//     );
-//   } else {
-//     // Payment failed
-//     await Order.findOneAndUpdate(
-//       { 'payment.mpesa.checkoutRequestId': result.CheckoutRequestID },
-//       {
-//         'payment.status': 'failed',
-//         'payment.error': {
-//           code: result.ResultCode,
-//           message: result.ResultDesc,
-//         },
-//       }
-//     );
-//   }
-
-//   res.status(StatusCodes.OK).json({ received: true });
-// };
-
-// // Check payment status
-// export const checkPaymentStatus = async (req, res) => {
-//   const { orderId } = req.params;
-//   const order = await Order.findById(orderId).select('payment.status');
-
-//   if (!order) {
-//     return res.status(StatusCodes.NOT_FOUND).json({
-//       success: false,
-//       message: 'Order not found',
-//     });
-//   }
-
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     status: order.payment.status,
-//   });
-// };
-
-// export const getPaymentMethods = async (req, res) => {
-//   const methods = [
-//     {
-//       id: 'card',
-//       name: 'Credit/Debit Card',
-//       description: 'Pay with Visa, Mastercard, or other cards',
-//       icon: 'credit-card',
-//       enabled: true,
-//     },
-//     {
-//       id: 'mpesa',
-//       name: 'M-Pesa',
-//       description: 'Mobile money payment via M-Pesa',
-//       icon: 'mobile',
-//       enabled: true,
-//     },
-//     {
-//       id: 'paypal',
-//       name: 'PayPal',
-//       description: 'Pay with your PayPal account',
-//       icon: 'paypal',
-//       enabled: true,
-//     },
-//   ];
-//   res.status(StatusCodes.OK).json({
-//     success: true,
-//     methods,
-//   });
-// };
-
-// // import { StatusCodes } from 'http-status-codes';
-// // import Stripe from 'stripe';
-
-// // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// // // Process stripe payments => /api/v1/payment/process
-// // export const processPayment = async (req, res) => {
-// //   const paymentIntent = await stripe.paymentIntents.create({
-// //     amount: req.body.amount,
-// //     currency: 'usd',
-// //     metadata: { integration_check: 'accept_a_payment' },
-// //   });
-
-// //   res
-// //     .status(StatusCodes.OK)
-// //     .json({ success: true, client_secret: paymentIntent.client_secret });
-// // };
-
-// // // Send Stripe API Key => /api/stripeapi
-// // export const sendStripeApiKey = async (req, res) => {
-// //   res.status(StatusCodes.OK).json({ stripeApiKey: process.env.STRIPE_API_KEY });
-// // };

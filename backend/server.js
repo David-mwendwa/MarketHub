@@ -42,7 +42,7 @@ app.set('trust proxy', 1); // trust first proxy (Render)
 // Enable CORS
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'https://markethub.netlify.app'],
+    origin: [process.env.FRONTEND_URL, process.env.PROD_FRONTEND_URL],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],

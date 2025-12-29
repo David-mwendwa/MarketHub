@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useNavigate, Link } from 'react-router-dom';
+
 import { Button } from '../../components/ui/Button';
 import CheckoutForm from '../../components/checkout/CheckoutForm';
 import OrderSummary from '../../components/checkout/OrderSummary';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUser } from '../../contexts/UserContext';
-import orderService from '../../services/order';
-import { paymentAPI } from '../../lib/api';
+import { useOrder } from '../../contexts/OrderContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { format } from 'date-fns';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -37,6 +37,8 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const Checkout = () => {
   const [isLoading, setIsLoading] = useState(true);
+
+  const { createOrder } = useOrder();
 
   // Get the full cart state
   const cartState = useCart() || {};
@@ -101,50 +103,29 @@ const Checkout = () => {
     { id: 3, name: 'Review', status: 'upcoming' },
   ];
 
-  const handleSubmitOrder = async (orderData) => {
+  const handleSubmitOrder = async (formData) => {
     setError(null);
     setIsSubmitting(true);
 
     try {
-      // Create the order data with the correct payment method
+      // Format order items with required fields
+      const orderItems = cartItems.map((item) => ({
+        product: item._id || item.id,
+        name: item.name || `Product ${item.id}`,
+        quantity: item.quantity,
+        price: item.price,
+        sku: item.sku,
+        variant: item.variant,
+      }));
+
+      // Prepare order data
       const orderData = {
         user: user?._id,
-        items: cartItems.map((item) => ({
-          product: item._id,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          sku: item.sku,
-          variant: item.variant,
-        })),
-        subtotal: subtotal, // Already in the correct format
-        tax: tax, // Already in the correct format
-        shipping: shipping, // Already in the correct format
-        total: total, // Already in the correct format
-        currency: 'KES',
-        status: 'pending',
-        source: 'web',
+        items: orderItems,
+        shippingAddress: formData.shippingAddress || {},
         payment: {
-          method: orderData.paymentMethod,
+          method: formData.paymentMethod,
           status: 'pending',
-          amount: {
-            subtotal: subtotal, // Already in the correct format
-            tax: tax, // Already in the correct format
-            shipping: shipping, // Already in the correct format
-            total: total, // Already in the correct format
-            currency: 'KES',
-          },
-        },
-      };
-
-      // 1. Create the order in the database
-      const order = await orderService.createOrder(orderData);
-
-      // 2. Initialize payment with the created order ID
-      const paymentResult = await paymentAPI.initializePayment(
-        order._id,
-        orderData.payment.method,
-        {
           amount: {
             subtotal: subtotal,
             tax: tax,
@@ -152,39 +133,49 @@ const Checkout = () => {
             total: total,
             currency: 'KES',
           },
-          ...orderData,
-        }
-      );
+        },
+        subtotal: subtotal,
+        tax: tax,
+        shipping: shipping,
+        total: total,
+        currency: 'KES',
+        status: 'pending',
+        source: 'web',
+        notes: formData.notes,
+      };
 
-      // 3. Handle successful order creation and payment initialization
-      if (paymentResult.success) {
-        // Clear cart on successful order
-        clearCart();
+      // 1. Create the order in the database
+      const order = await createOrder(orderData);
 
-        // Navigate to order confirmation
-        navigate('/order-confirmation', {
-          state: {
-            order: {
-              ...order,
-              orderNumber: `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
-              status: 'processing',
-            },
-          },
-          replace: true,
-        });
-      } else {
-        throw new Error(paymentResult.message || 'Failed to process payment');
-      }
+      // 2. Return the order data for the CheckoutForm to handle payment
+      return {
+        order,
+        success: true,
+        orderNumber: `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
+      };
     } catch (error) {
-      console.error('Error submitting order:', error);
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          'Failed to process your order. Please try again.'
-      );
+      console.error('Error creating order:', error);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOrderSuccess = (orderData) => {
+    // Clear cart on successful order
+    clearCart();
+
+    // Navigate to order confirmation
+    navigate('/order-confirmation', {
+      state: {
+        order: {
+          ...orderData.order,
+          orderNumber: orderData.orderNumber,
+          status: 'processing',
+        },
+      },
+      replace: true,
+    });
   };
 
   if (isLoading || isAuthLoading || isUserLoading) {
@@ -485,12 +476,27 @@ const Checkout = () => {
                 </div>
                 <Elements stripe={stripePromise}>
                   <CheckoutForm
-                    onSubmit={handleSubmitOrder}
+                    onSubmit={async (formData) => {
+                      try {
+                        // First create the order
+                        const orderResult = await handleSubmitOrder(formData);
+
+                        // Then let the CheckoutForm handle the payment flow
+                        return orderResult;
+                      } catch (error) {
+                        console.error('Order submission failed:', error);
+                        setError(
+                          error.message || 'Failed to process your order'
+                        );
+                        throw error;
+                      }
+                    }}
+                    onSuccess={handleOrderSuccess}
                     isSubmitting={isSubmitting}
                     user={user}
-                    cartItems={cartItems}
                     defaultAddress={defaultAddress}
                     cartTotal={total}
+                    cartItems={cartItems}
                     subtotal={subtotal}
                     tax={tax}
                     shipping={shipping}

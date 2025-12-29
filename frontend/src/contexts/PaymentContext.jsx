@@ -40,10 +40,8 @@ export const PaymentProvider = ({ children }) => {
     }
   }, []);
 
-  // Load user's payment methods
+  // Load available payment methods
   const loadPaymentMethods = useCallback(async () => {
-    if (!user) return;
-
     try {
       const methods = await paymentService.getMethods();
       setPaymentMethods(methods);
@@ -53,94 +51,73 @@ export const PaymentProvider = ({ children }) => {
       toast.error('Failed to load payment methods');
       throw err;
     }
-  }, [user]);
+  }, []);
 
-  // Initialize payment
-  const initializePayment = useCallback(
-    async (orderId, paymentMethod, details = {}) => {
-      console.log('PaymentContext: Initializing payment with:', {
-        orderId,
-        paymentMethod,
-        details,
-      });
-      setIsProcessing(true);
-      try {
-        console.log('PaymentContext: Calling paymentService.initializePayment');
-        const result = await paymentService.initializePayment(
-          orderId,
-          paymentMethod,
-          details
-        );
-        console.log('PaymentContext: Payment initialized successfully', result);
-        return result;
-      } catch (err) {
-        console.error(`Payment initialization failed (${paymentMethod}):`, err);
-        toast.error(
-          err.response?.data?.message || 'Payment initialization failed'
-        );
-        throw err;
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    []
-  );
-
-  // Process payment (legacy support)
-  const processPayment = useCallback(async (type, data) => {
+  // Process card payment
+  const processCardPayment = useCallback(async (orderId, paymentMethodId) => {
+    setIsProcessing(true);
     try {
-      console.log('Processing payment with type:', type, 'and data:', data);
-      switch (type) {
-        case 'mpesa':
-          return await paymentService.processMpesaPayment(
-            data.orderId,
-            data.phone,
-            data.amount
-          );
-        case 'card':
-          return await paymentService.processCardPayment(
-            data.orderId,
-            data.paymentMethodId
-          );
-        case 'paypal':
-          return await paymentService.processPayPalPayment(
-            data.orderId,
-            data.amount
-          );
-        default:
-          throw new Error(`Unsupported payment method: ${type}`);
-      }
+      console.log('Processing card payment for order:', orderId);
+      const result = await paymentService.processCardPayment(
+        orderId,
+        paymentMethodId
+      );
+      console.log('Card payment processed successfully:', result);
+      return result;
     } catch (error) {
-      console.error(`Payment error (${type}):`, error);
-      toast.error(error.response?.data?.message || `Payment error (${type})`);
+      console.error('Card payment failed:', error);
+      toast.error(error.response?.data?.message || 'Card payment failed');
       throw error;
+    } finally {
+      setIsProcessing(false);
     }
   }, []);
 
-  // Save payment method
-  const savePaymentMethod = useCallback(
-    async (methodData) => {
-      try {
-        const method = await paymentService.saveMethod(methodData);
-        await loadPaymentMethods(); // Refresh payment methods
-        return method;
-      } catch (err) {
-        console.error('Failed to save payment method:', err);
-        toast.error('Failed to save payment method');
-        throw err;
-      }
-    },
-    [loadPaymentMethods]
-  );
+  // Process M-Pesa payment
+  const processMpesaPayment = useCallback(async (orderId, phone) => {
+    setIsProcessing(true);
+    try {
+      console.log('Processing M-Pesa payment for order:', orderId);
+      const result = await paymentService.processMpesaPayment(orderId, phone);
+      console.log('M-Pesa payment initiated successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('M-Pesa payment failed:', error);
+      toast.error(error.response?.data?.message || 'M-Pesa payment failed');
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  // Process PayPal payment
+  const processPayPalPayment = useCallback(async (orderId) => {
+    setIsProcessing(true);
+    try {
+      console.log('Processing PayPal payment for order:', orderId);
+      const result = await paymentService.processPayPalPayment(orderId);
+      console.log('PayPal payment processed successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('PayPal payment failed:', error);
+      toast.error(error.response?.data?.message || 'PayPal payment failed');
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
 
   // Check payment status
   const checkPaymentStatus = useCallback(async (orderId) => {
     try {
-      return await paymentService.checkStatus(orderId);
-    } catch (err) {
-      console.error('Failed to check payment status:', err);
+      console.log('Checking payment status for order:', orderId);
+      const status = await paymentService.checkStatus(orderId);
+      console.log('Payment status checked successfully:', status);
+      return status;
+    } catch (error) {
+      console.error('Failed to check payment status:', error);
       toast.error('Failed to check payment status');
-      throw err;
+      throw error;
     }
   }, []);
 
@@ -151,26 +128,20 @@ export const PaymentProvider = ({ children }) => {
       console.log('PaymentContext: Starting initialization');
       try {
         await loadPaymentConfig();
-        if (user) {
-          console.log('PaymentContext: User detected, loading payment methods');
-          await loadPaymentMethods();
-        } else {
-          console.log(
-            'PaymentContext: No user detected, skipping payment methods'
-          );
-        }
+        await loadPaymentMethods();
         console.log('PaymentContext: Initialization complete');
       } catch (error) {
         console.error('PaymentContext: Initialization error:', error);
       }
     };
+
     init();
 
     // Cleanup function
     return () => {
       console.log('PaymentContext: Cleaning up');
     };
-  }, [user, loadPaymentConfig, loadPaymentMethods]);
+  }, [loadPaymentConfig, loadPaymentMethods]);
 
   const value = {
     // State
@@ -181,9 +152,9 @@ export const PaymentProvider = ({ children }) => {
     isProcessing,
 
     // Methods
-    initializePayment,
-    processPayment, // Legacy support
-    savePaymentMethod,
+    processCardPayment,
+    processMpesaPayment,
+    processPayPalPayment,
     checkPaymentStatus,
     loadPaymentConfig,
     loadPaymentMethods,
