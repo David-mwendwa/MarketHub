@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response?.success && response.user) {
         localStorage.setItem('token', response.token);
-        setUser(response); // Set the full response which includes success and user
+        setUser(response.user); // Only set the user object from the response
         return response.user;
       } else {
         throw new Error('Invalid response from server');

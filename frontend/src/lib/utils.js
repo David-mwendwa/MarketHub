@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 /**
  * Formats a number as Kenyan Shillings (Ksh)
  * @param {number} amount - The amount to format
@@ -13,15 +15,26 @@ export const formatCurrency = (amount) => {
   })}`;
 };
 
-export const formatDate = (dateString) => {
-  const options = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+/**
+ * Formats a date string using moment.js
+ * @param {string|Date} dateString - The date to format
+ * @param {string} [format='LLL'] - The format string (defaults to 'LLL' - e.g., "February 12, 2021 2:30 PM")
+ * @returns {string} Formatted date string
+ */
+export const formatDate = (dateString, format = 'lll') => {
+  if (!dateString) return 'N/A';
+  return moment(dateString).format(format);
+};
+
+// Common format presets
+formatDate.presets = {
+  short: 'L', // 02/12/2021
+  medium: 'll', // Feb 12, 2021
+  long: 'LL', // February 12, 2021
+  full: 'LLLL', // Friday, February 12, 2021 2:30 PM
+  time: 'LT', // 2:30 PM
+  dateTime: 'lll', // Feb 12, 2021 2:30 PM
+  iso: 'YYYY-MM-DDTHH:mm:ssZ', // 2021-02-12T14:30:00+03:00
 };
 
 export const cn = (...classes) => {

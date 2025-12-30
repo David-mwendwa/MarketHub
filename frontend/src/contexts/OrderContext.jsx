@@ -53,22 +53,43 @@ export const OrderProvider = ({ children }) => {
 
   // Fetch user's orders
   const fetchUserOrders = useCallback(async () => {
-    if (!user?._id) return;
+    // Handle nested user object structure
+    const userId = user?.user?._id || user?._id;
 
+    if (!userId) {
+      console.log('No user ID available, cannot fetch orders');
+      return [];
+    }
+
+    console.log(`Fetching orders for user: ${userId}`);
     setLoading(true);
     setError(null);
     try {
-      const userOrders = await orderService.getUserOrders(user._id);
-      setOrders(userOrders);
-      return userOrders;
+      const response = await orderService.getUserOrders(userId);
+      console.log('Orders fetched from service:', response);
+
+      // Extract the orders array from the response
+      let ordersArray = [];
+      if (response?.success && Array.isArray(response.data)) {
+        ordersArray = response.data;
+      } else if (Array.isArray(response)) {
+        // Fallback for different response structure
+        ordersArray = response;
+      }
+
+      console.log('Extracted orders:', ordersArray);
+      setOrders(ordersArray);
+      return ordersArray;
     } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to fetch orders';
       console.error('Failed to fetch user orders:', err);
-      setError(err.response?.data?.message || 'Failed to fetch orders');
-      throw err;
+      setError(errorMsg);
+      toast.error(errorMsg);
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [user?._id]);
+  }, [user]);
 
   // Clear current order
   const clearCurrentOrder = useCallback(() => {
@@ -82,10 +103,18 @@ export const OrderProvider = ({ children }) => {
 
   // Initial data loading
   useEffect(() => {
-    if (user?._id) {
+    const userId = user?.user?._id || user?._id;
+
+    if (userId) {
+      console.log('User ID available, fetching orders...', { userId });
       fetchUserOrders();
+    } else if (user === null || (user && !userId)) {
+      console.log('No valid user ID found, clearing orders');
+      setOrders([]);
     }
-  }, [user?._id, fetchUserOrders]);
+    // We don't include fetchUserOrders in deps to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.user?._id, user?._id]);
 
   return (
     <OrderContext.Provider
