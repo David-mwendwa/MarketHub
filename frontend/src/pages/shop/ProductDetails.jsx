@@ -257,9 +257,10 @@ const ProductDetails = () => {
         name: product.name,
         price: parseFloat(product.price) || 0,
         quantity: 1, // Always add 1 initially
-        image:
+        thumbnail:
           product.thumbnail ||
           (Array.isArray(product.gallery) && product.gallery[0]?.thumbnail) ||
+          (Array.isArray(product.gallery) && product.gallery[0]?.url) || // Fallback to URL if thumbnail not available
           '/placeholder-product.jpg',
         sku: product.sku,
         stock: product.stock?.qty || 0,

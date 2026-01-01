@@ -1,6 +1,7 @@
 import { useWishlist } from '../../contexts/WishlistContext';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { IconButton } from '../ui/Button';
 
 // Custom heart icon with animation
 const HeartIcon = ({ isFilled, size = 20, className = '' }) => {
@@ -46,16 +47,6 @@ const HeartIcon = ({ isFilled, size = 20, className = '' }) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Pulse effect when added to wishlist */}
-      {isFilled && (
-        <motion.div
-          className='absolute inset-0 rounded-full bg-red-500/20'
-          initial={{ scale: 1, opacity: 0 }}
-          animate={{ scale: 1.5, opacity: 0 }}
-          transition={{ duration: 0.6, repeat: isFilled ? 1 : 0 }}
-        />
-      )}
     </div>
   );
 };
@@ -65,6 +56,7 @@ const WishlistButton = ({
   size = 20,
   className = '',
   onWishlistUpdate,
+  buttonClass = '',
 }) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const isWishlisted = isInWishlist(product._id || product.id);
@@ -81,7 +73,7 @@ const WishlistButton = ({
         toast.success('Removed from wishlist', {
           position: 'bottom-right',
           style: {
-            background: '#22c55e', // Green for success
+            background: '#22c55e',
             color: '#fff',
           },
         });
@@ -94,7 +86,7 @@ const WishlistButton = ({
         toast.success('Added to wishlist', {
           position: 'bottom-right',
           style: {
-            background: '#22c55e', // Green for success
+            background: '#22c55e',
             color: '#fff',
           },
         });
@@ -103,17 +95,22 @@ const WishlistButton = ({
   };
 
   return (
-    <motion.button
+    <IconButton
       onClick={handleWishlistToggle}
-      className={`p-2 rounded-full transition-colors group ${
+      variant='ghost'
+      size='icon'
+      className={`group p-2 rounded-full transition-colors ${
         isWishlisted
           ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
           : 'text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700/50'
       } ${className}`}
       aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-      whileTap={{ scale: 0.9 }}>
-      <HeartIcon isFilled={isWishlisted} size={20} />
-    </motion.button>
+      whileTap={{ scale: 0.9 }}
+      as={motion.button}
+      icon={({ className }) => (
+        <HeartIcon isFilled={isWishlisted} size={20} className={className} />
+      )}
+    />
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
+import { Button, IconButton } from '../../components/ui/Button';
 import WishlistButton from '@/components/common/WishlistButton';
 
 // Shipping Modal Component
@@ -589,28 +589,28 @@ const Cart = () => {
                         {/* Quantity Controls */}
                         <div className='mt-3 flex flex-wrap items-center gap-3'>
                           <div className='flex items-center bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden border border-gray-200 dark:border-gray-600'>
-                            <button
+                            <IconButton
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleQuantityChange(
-                                  item._id, // Changed from item.id to item._id
+                                  item._id,
                                   item.quantity - 1
                                 );
                               }}
                               disabled={item.quantity <= 1}
-                              className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'>
-                              <Minus className='h-4 w-4' />
-                            </button>
+                              icon={Minus}
+                              className='text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed'
+                            />
 
                             <span className='w-10 text-center text-sm font-medium'>
                               {item.quantity}
                             </span>
 
-                            <button
+                            <IconButton
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleQuantityChange(
-                                  item._id, // Changed from item.id to item._id
+                                  item._id,
                                   item.quantity + 1
                                 );
                               }}
@@ -618,27 +618,27 @@ const Cart = () => {
                                 !stockStatus.isInStock ||
                                 (isLowStock && item.quantity >= stockQty)
                               }
-                              className='p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'>
-                              <Plus className='h-4 w-4' />
-                            </button>
+                              icon={Plus}
+                              className='text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed'
+                            />
                           </div>
 
-                          <div className='flex items-center'>
+                          <div className='flex items-center gap-1'>
                             <WishlistButton
                               product={item}
                               className='h-10 w-10 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center justify-center transition-colors rounded-md'
                               buttonClass='h-full w-full flex items-center justify-center p-0'
                             />
 
-                            <button
+                            <IconButton
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleRemoveItem(item._id);
                               }}
-                              className='p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'>
-                              <Trash2 className='h-5 w-5' />
-                              <span className='sr-only'>Remove</span>
-                            </button>
+                              icon={Trash2}
+                              aria-label='Remove item'
+                              className='text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                            />
                           </div>
                         </div>
                       </div>

@@ -31,7 +31,7 @@ const Button = React.forwardRef(
       outline:
         'border border-input hover:bg-accent hover:text-accent-foreground dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
       ghost:
-        'hover:bg-accent hover:text-accent-foreground dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700',
+        'hover:bg-accent hover:text-accent-foreground border border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 flex items-center justify-center',
       link: 'text-primary underline-offset-4 hover:underline dark:text-primary-400',
       danger:
         'bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:bg-red-800 dark:hover:bg-red-700',
@@ -64,6 +64,16 @@ const Button = React.forwardRef(
     // Use startIcon if provided, otherwise fall back to leftIcon
     const StartIcon = startIcon || LeftIcon;
     const EndIcon = endIcon || RightIcon;
+
+    // Ensure icons are rendered as React elements
+    const renderIcon = (Icon, className) => {
+      if (!Icon) return null;
+      return React.isValidElement(Icon) ? (
+        React.cloneElement(Icon, { className })
+      ) : (
+        <Icon className={className} />
+      );
+    };
 
     // If asChild is true, clone the child and add our classes to it
     if (asChild) {
@@ -107,13 +117,13 @@ const Button = React.forwardRef(
             />
           </svg>
         )}
-        {!isLoading && StartIcon && (
-          <StartIcon className={cn('h-4 w-4', children ? 'mr-2' : '')} />
-        )}
+        {!isLoading &&
+          StartIcon &&
+          renderIcon(StartIcon, cn('h-4 w-4', children ? 'mr-2' : ''))}
         {children}
-        {!isLoading && EndIcon && (
-          <EndIcon className={cn('h-4 w-4', children ? 'ml-2' : '')} />
-        )}
+        {!isLoading &&
+          EndIcon &&
+          renderIcon(EndIcon, cn('h-4 w-4', children ? 'ml-2' : ''))}
       </>
     );
 
@@ -140,10 +150,18 @@ Button.displayName = 'Button';
 
 export { Button };
 
-export const IconButton = React.forwardRef(({ icon: Icon, ...props }, ref) => (
-  <Button ref={ref} variant='ghost' size='icon' iconOnly {...props}>
-    <Icon className='h-5 w-5' />
-  </Button>
-));
+export const IconButton = React.forwardRef(
+  ({ icon: Icon, className = '', ...props }, ref) => (
+    <Button
+      ref={ref}
+      variant='ghost'
+      size='icon'
+      iconOnly
+      className={className}
+      {...props}>
+      <Icon className='h-5 w-5 flex-shrink-0' />
+    </Button>
+  )
+);
 
 IconButton.displayName = 'IconButton';
