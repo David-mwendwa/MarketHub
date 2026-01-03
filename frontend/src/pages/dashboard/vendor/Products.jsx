@@ -62,6 +62,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 
 // Import products data
 import productsData from '@pages/dashboard/data/products.json';
+import { useProduct } from '@/contexts/ProductContext';
 
 // Product Data and Utilities
 import {
@@ -106,8 +107,17 @@ const statusConfig = {
 
 const ProductsPage = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    products,
+    loading,
+    error,
+    fetchProducts,
+    deleteProduct,
+    resetProduct,
+  } = useProduct();
+
+  // console.log('PRODUCTS', products);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({
     key: 'name',
@@ -120,35 +130,52 @@ const ProductsPage = () => {
     stockStatus: 'all',
     priceRange: 'all',
   });
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // Default to 10 items per page
+  const [pageSize, setPageSize] = useState(10);
   const [selectedRows, setSelectedRows] = useState([]);
-
-  // Update page size to show all products when products change
-  useEffect(() => {
-    if (products.length > 0) {
-      setPageSize(products.length);
-    }
-  }, [products]);
 
   // Fetch products
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadProducts = async () => {
       try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        console.log('Setting products data:', productsData);
-        setProducts(productsData);
+        await fetchProducts();
       } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
+        toast.error(error.message || 'Failed to load products');
       }
     };
-    fetchProducts();
-  }, []);
+    loadProducts();
+  }, [fetchProducts]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await deleteProduct(id);
+        toast.success('Product deleted successfully');
+        setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
+      } catch (error) {
+        toast.error(error.message || 'Failed to delete product');
+      }
+    }
+  };
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedRows.length === 0) return;
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedRows.length} selected products?`
+      )
+    ) {
+      try {
+        await Promise.all(selectedRows.map((id) => deleteProduct(id)));
+        toast.success(`${selectedRows.length} products deleted successfully`);
+        setSelectedRows([]);
+      } catch (error) {
+        toast.error('Failed to delete some products');
+      }
+    }
+  };
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -268,18 +295,6 @@ const ProductsPage = () => {
     return result;
   }, [products, searchQuery, filters]);
 
-  // Debug filtered products
-  useEffect(() => {
-    console.log('Filtered products:', filteredProducts);
-    console.log(
-      'Current page data:',
-      filteredProducts.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-      )
-    );
-  }, [filteredProducts, currentPage, pageSize]);
-
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const paginatedData = useMemo(() => {
@@ -377,11 +392,15 @@ const ProductsPage = () => {
             </Link>
             <div className='flex items-center mt-1'>
               <div className='h-8 w-8 rounded-md bg-muted overflow-hidden mr-2 flex-shrink-0'>
-                {product.image ? (
+                {product.thumbnail ? (
                   <img
-                    src={product.image}
+                    src={product.thumbnail}
                     alt={product.name}
                     className='h-full w-full object-cover'
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/40';
+                    }}
                   />
                 ) : (
                   <div className='h-full w-full bg-muted-foreground/10 flex items-center justify-center'>
@@ -471,33 +490,57 @@ const ProductsPage = () => {
       className: 'text-center',
       cell: (row) => {
         const product = row.original || row;
-        const stock = product.stock || 0;
+        const stockQty =
+          typeof product.stock === 'object'
+            ? product.stock.qty || 0
+            : product.stock || 0;
+        const stockStatus =
+          typeof product.stock === 'object'
+            ? product.stock.status || 'in_stock'
+            : 'in_stock';
         const lowStockThreshold = product.lowStockThreshold || 10;
+
+        // Map stock status to display text
+        const statusMap = {
+          in_stock: 'In Stock',
+          out_of_stock: 'Out of Stock',
+          preorder: 'Pre-Order',
+          backorder: 'Backordered',
+        };
+
+        // Determine status color
+        let statusColor = 'bg-green-500';
+        if (stockQty <= 0) {
+          statusColor = 'bg-red-500';
+        } else if (stockQty <= lowStockThreshold) {
+          statusColor = 'bg-amber-500';
+        }
 
         return (
           <div className='flex flex-col items-center'>
             <div className='flex items-center'>
               <span
-                className={`h-2.5 w-2.5 rounded-full mr-2 ${
-                  stock > 10
-                    ? 'bg-green-500'
-                    : stock > 0
-                      ? 'bg-amber-500'
-                      : 'bg-red-500'
-                }`}
+                className={`h-2.5 w-2.5 rounded-full mr-2 ${statusColor}`}
               />
-              <span className='font-medium'>{stock}</span>
-              <span className='text-muted-foreground ml-1'>in stock</span>
+              <span className='font-medium'>{stockQty}</span>
+              <span className='text-muted-foreground ml-1'>
+                {statusMap[stockStatus] || 'In Stock'}
+              </span>
             </div>
-            {stock <= lowStockThreshold && (
+            {stockQty > 0 && stockQty <= lowStockThreshold && (
               <div className='text-xs text-amber-600 dark:text-amber-400 mt-0.5'>
                 Low stock
+              </div>
+            )}
+            {stockQty <= 0 && (
+              <div className='text-xs text-red-600 dark:text-red-400 mt-0.5'>
+                Out of stock
               </div>
             )}
           </div>
         );
       },
-      width: 180,
+      width: 200,
     },
     {
       key: 'price',
@@ -751,10 +794,7 @@ const ProductsPage = () => {
         <CardContent className='p-0'>
           <DataTable
             columns={columns}
-            data={filteredProducts.slice(
-              (currentPage - 1) * pageSize,
-              currentPage * pageSize
-            )}
+            data={filteredProducts}
             totalItems={filteredProducts.length}
             pagination={{
               currentPage,

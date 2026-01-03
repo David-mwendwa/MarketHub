@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect , useCallback} from 'react';
 import { toast } from 'react-toastify';
 import { productService } from '@/services/product';
 
-// Action types
 const ProductActionTypes = {
   FETCH_PRODUCTS_START: 'FETCH_PRODUCTS_START',
   FETCH_PRODUCTS_SUCCESS: 'FETCH_PRODUCTS_SUCCESS',
@@ -22,7 +21,6 @@ const ProductActionTypes = {
   RESET_PRODUCT: 'RESET_PRODUCT',
 };
 
-// Initial state
 const initialState = {
   products: [],
   product: null,
@@ -31,7 +29,6 @@ const initialState = {
   success: false,
 };
 
-// Reducer
 const productReducer = (state, action) => {
   switch (action.type) {
     case ProductActionTypes.FETCH_PRODUCTS_START:
@@ -115,91 +112,95 @@ const productReducer = (state, action) => {
   }
 };
 
-// Create context
 const ProductContext = createContext(initialState);
 
-// Provider component
 export const ProductProvider = ({ children }) => {
   const [state, dispatch] = useReducer(productReducer, initialState);
 
-  // Fetch all products
-  const fetchProducts = async (filters = {}) => {
+  const fetchProducts = useCallback(async (filters = {}, signal) => {
     try {
       dispatch({ type: ProductActionTypes.FETCH_PRODUCTS_START });
-      const data = await productService.getProducts(filters);
+
+			const response = await productService.getProducts(filters, { signal });
+			console.log({response})
+			const products = response.products || response.data?.products || [];
+
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCTS_SUCCESS,
-        payload: data,
+        payload: products,
       });
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCTS_FAIL,
         payload: error.response?.data?.message || error.message,
       });
       throw error;
     }
-  };
-
-  // Fetch single product
-  const fetchProduct = async (id) => {
+	}, []);
+	
+  const fetchProduct = useCallback(async (id) => {
     try {
       dispatch({ type: ProductActionTypes.FETCH_PRODUCT_START });
-      const data = await productService.getProduct(id);
+      const response = await productService.getProduct(id);
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCT_SUCCESS,
-        payload: data,
+        payload: response.data || response,
       });
+      return response.data || response;
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCT_FAIL,
         payload: error.response?.data?.message || error.message,
       });
       throw error;
     }
-  };
+  }, []);
 
-  // Create product
-  const createProduct = async (productData) => {
+  const createProduct = useCallback(async (productData) => {
     try {
       dispatch({ type: ProductActionTypes.CREATE_PRODUCT_START });
-      const data = await productService.createProduct(productData);
+      const response = await productService.createProduct(productData);
       dispatch({
         type: ProductActionTypes.CREATE_PRODUCT_SUCCESS,
-        payload: data,
+        payload: response.data || response,
       });
-      toast.success('Product created successfully');
-      return data;
+      return response.data || response;
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       dispatch({
         type: ProductActionTypes.CREATE_PRODUCT_FAIL,
         payload: error.response?.data?.message || error.message,
       });
       throw error;
     }
-  };
+  }, []);
 
-  // Update product
-  const updateProduct = async (id, productData) => {
+  const updateProduct = useCallback(async (id, productData) => {
     try {
       dispatch({ type: ProductActionTypes.UPDATE_PRODUCT_START });
-      const data = await productService.updateProduct(id, productData);
+      const response = await productService.updateProduct(id, productData);
       dispatch({
         type: ProductActionTypes.UPDATE_PRODUCT_SUCCESS,
-        payload: data,
+        payload: response.data || response,
       });
-      toast.success('Product updated successfully');
-      return data;
+      return response.data || response;
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       dispatch({
         type: ProductActionTypes.UPDATE_PRODUCT_FAIL,
         payload: error.response?.data?.message || error.message,
       });
       throw error;
     }
-  };
+  }, []);
 
-  // Delete product
-  const deleteProduct = async (id) => {
+  const deleteProduct = useCallback(async (id) => {
     try {
       dispatch({ type: ProductActionTypes.DELETE_PRODUCT_START });
       await productService.deleteProduct(id);
@@ -207,20 +208,20 @@ export const ProductProvider = ({ children }) => {
         type: ProductActionTypes.DELETE_PRODUCT_SUCCESS,
         payload: id,
       });
-      toast.success('Product deleted successfully');
     } catch (error) {
+      if (error.name === 'AbortError') return;
+
       dispatch({
         type: ProductActionTypes.DELETE_PRODUCT_FAIL,
         payload: error.response?.data?.message || error.message,
       });
       throw error;
     }
-  };
+  }, []);
 
-  // Reset product state
-  const resetProduct = () => {
-    dispatch({ type: ProductActionTypes.RESET_PRODUCT });
-  };
+ const resetProduct = useCallback(() => {
+   dispatch({ type: ProductActionTypes.RESET_PRODUCT });
+ }, []);
 
   return (
     <ProductContext.Provider
@@ -238,7 +239,6 @@ export const ProductProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use product context
 export const useProduct = () => {
   const context = useContext(ProductContext);
   if (!context) {
