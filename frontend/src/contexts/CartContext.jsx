@@ -60,7 +60,7 @@ const calculateCartValues = (items, hasOrderProtection = false) => {
   const orderProtection = hasOrderProtection ? 500 : 0;
   const total = subtotal + shipping + tax + orderProtection;
   const itemCount = calculateItemCount(items);
-  
+
   return {
     subtotal,
     shipping,
@@ -68,7 +68,7 @@ const calculateCartValues = (items, hasOrderProtection = false) => {
     orderProtection,
     total,
     itemCount,
-    hasOrderProtection
+    hasOrderProtection,
   };
 };
 
@@ -287,7 +287,7 @@ export const CartProvider = ({ children }) => {
       {children}
     </CartContext.Provider>
   );
-};;
+};
 
 export const useCart = () => {
   const context = useContext(CartContext);
