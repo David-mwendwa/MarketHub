@@ -379,7 +379,7 @@ const ProductsPage = () => {
         return (
           <div className='flex flex-col'>
             <Link
-              to={`/dashboard/seller/products/${product._id}`}
+              to={`/dashboard/vendor/products/${product._id}`}
               className='font-medium text-foreground hover:underline inline-flex items-center'
               onClick={(e) => e.stopPropagation()}>
               {product.name}
