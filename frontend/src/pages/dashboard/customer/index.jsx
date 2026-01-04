@@ -9,7 +9,7 @@ import {
 } from '../../../components/ui/UICard';
 import { ShoppingBag, Clock, CheckCircle, Truck, Star } from 'lucide-react';
 
-const BuyerDashboard = () => {
+const CustomerDashboard = () => {
   const orderStatus = [
     {
       name: 'To Pay',
@@ -282,4 +282,4 @@ const BuyerDashboard = () => {
   );
 };
 
-export default BuyerDashboard;
+export default CustomerDashboard;

@@ -354,11 +354,6 @@ const ProductsPage = () => {
     filters.stockStatus !== 'all' ||
     filters.priceRange !== 'all';
 
-  const handleProductClick = (e, _id) => {
-    e.stopPropagation();
-    navigate(`/dashboard/admin/products/${_id}`);
-  };
-
   if (loading) {
     return (
       <ContentSkeleton
@@ -384,7 +379,7 @@ const ProductsPage = () => {
         return (
           <div className='flex flex-col'>
             <Link
-              to={`/dashboard/admin/products/${product._id}`}
+              to={`/dashboard/seller/products/${product._id}`}
               className='font-medium text-foreground hover:underline inline-flex items-center'
               onClick={(e) => e.stopPropagation()}>
               {product.name}
@@ -850,7 +845,9 @@ const ProductsPage = () => {
                 </p>
                 {!hasActiveFilters && (
                   <Button
-                    onClick={() => navigate('/dashboard/admin/products/new')}>
+                    onClick={() =>
+                      navigate(ROUTES.DASHBOARD.SELLER_PRODUCT_NEW)
+                    }>
                     <Plus className='mr-2 h-4 w-4' />
                     Add Product
                   </Button>

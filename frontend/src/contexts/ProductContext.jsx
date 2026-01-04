@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect , useCallback} from 'react';
-import { toast } from 'react-toastify';
+import { createContext, useContext, useReducer, useEffect , useCallback} from 'react';
 import { productService } from '@/services/product';
 
 const ProductActionTypes = {
