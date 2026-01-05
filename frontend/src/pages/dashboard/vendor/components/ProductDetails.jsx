@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../../../components/ui/Button';
 import { Plus, Eye, Edit, ArrowLeft } from 'lucide-react';
+import { useProduct } from '../../../../contexts/ProductContext';
+import { toast } from 'react-toastify';
 import {
   Card,
   CardContent,
@@ -26,81 +28,69 @@ import ProductStats from '../../shared/ProductStats';
 import ProductForm from '../../shared/ProductForm';
 
 const SellerProductDetailsPage = () => {
-  const { id } = useParams();
+  const { productId: id } = useParams();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mock product data - replace with API call using the id
-  const mockProduct = {
-    id: id || '1',
-    name: 'Premium Wireless Headphones',
-    description:
-      'High-quality wireless headphones with noise cancellation and 30-hour battery life.',
-    price: 299.99,
-    stock: 45,
-    sku: 'PHONE-001',
-    status: 'active',
-    isFeatured: true,
-    category: 'Electronics',
-    images: [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
-    ],
-    variations: [
-      {
-        id: '1',
-        name: 'Black',
-        price: 299.99,
-        stock: 20,
-        sku: 'PHONE-001-BLK',
-      },
-      {
-        id: '2',
-        name: 'White',
-        price: 319.99,
-        stock: 15,
-        sku: 'PHONE-001-WHT',
-      },
-      { id: '3', name: 'Blue', price: 309.99, stock: 10, sku: 'PHONE-001-BLU' },
-    ],
-    stats: {
-      views: 1245,
-      sales: 234,
-      revenue: 70197.66,
-      rating: 4.7,
-    },
-    seller: {
-      id: 'seller-123',
-      name: 'TechGadgets Inc.',
-      email: 'contact@techgadgets.com',
-      phone: '+1 (555) 123-4567',
-      joinDate: '2022-01-15',
-      status: 'verified',
-      rating: 4.8,
-      totalProducts: 24,
-      totalSales: 1245,
-    },
-    createdAt: '2023-10-15T10:30:00Z',
-    updatedAt: '2023-11-20T14:45:00Z',
+  // Get product data and methods from the context
+  const { product, loading, error, fetchProduct, updateProduct } = useProduct();
+
+  // Fetch product data when the component mounts or id changes
+  useEffect(() => {
+    const loadProduct = async () => {
+      console.log('ProductDetails - Component mounted or id changed:', { id });
+      if (id) {
+        console.log('ProductDetails - Fetching product with ID:', id);
+        try {
+          const data = await fetchProduct(id);
+          console.log('ProductDetails - Product fetch successful:', data);
+        } catch (error) {
+          console.error('ProductDetails - Error fetching product:', error);
+        }
+      } else {
+        console.warn('ProductDetails - No product ID provided');
+      }
+    };
+
+    loadProduct();
+  }, [id, fetchProduct]);
+
+  // Format product data for the form
+  const formatProductForForm = (product) => {
+    if (!product) return null;
+    return {
+      ...product,
+      price: product.price / 100, // Convert from cents to dollars
+      specialPrice: product.specialPrice ? product.specialPrice / 100 : null,
+      stock: product.stock?.qty || 0,
+      status: product.stock?.status || 'in_stock',
+      images: product.gallery || [],
+      variations: product.configurableOptions || [],
+    };
   };
 
   const handleSaveProduct = async (updatedProduct) => {
+    if (!id) return;
+
     try {
       setIsSaving(true);
-      console.log('Saving product:', updatedProduct);
-      // TODO: Implement actual API call to save the product
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
-      // Update the local state with the saved product
-      // In a real app, you might want to refetch the product data here
-      Object.assign(mockProduct, updatedProduct);
+      // Convert price back to cents before saving
+      const productToUpdate = {
+        ...updatedProduct,
+        price: Math.round(updatedProduct.price * 100),
+        specialPrice: updatedProduct.specialPrice
+          ? Math.round(updatedProduct.specialPrice * 100)
+          : null,
+      };
 
+      await updateProduct(id, productToUpdate);
       setIsEditing(false);
-      // You might want to show a success toast here
+      toast.success('Product updated successfully');
     } catch (error) {
-      console.error('Error saving product:', error);
-      // You might want to show an error toast here
+      console.error('Error updating product:', error);
+      toast.error(error.message || 'Failed to update product');
     } finally {
       setIsSaving(false);
     }
@@ -110,11 +100,63 @@ const SellerProductDetailsPage = () => {
     setIsEditing(false);
   };
 
+  console.log('ProductDetails - Current state:', {
+    loading,
+    error,
+    product,
+    isEditing,
+    isSaving,
+  });
+
+  if (loading) {
+    console.log('ProductDetails - Loading product...');
+    return (
+      <div className='flex items-center justify-center min-h-[400px]'>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500'></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('ProductDetails - Error state:', error);
+    return (
+      <div className='p-4 text-red-500'>
+        <p>Error loading product: {error.message || 'Unknown error'}</p>
+        <div className='mt-2 text-sm text-gray-500'>
+          <p>ID: {id}</p>
+          <p>Error details: {JSON.stringify(error.response?.data || {})}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!id) {
+    console.error('ProductDetails - No product ID provided in URL');
+    return (
+      <div className='p-4 text-red-500'>
+        <p>Error: No product ID provided</p>
+        <p className='text-sm text-gray-500 mt-2'>
+          Please make sure you're accessing this page from a valid product link.
+        </p>
+      </div>
+    );
+  }
+
+  if (!product) {
+    console.warn('ProductDetails - Product not found for ID:', id);
+    return (
+      <div className='p-4'>
+        <p>Product not found</p>
+        <p className='text-sm text-gray-500'>ID: {id}</p>
+      </div>
+    );
+  }
+
   if (isEditing) {
     return (
       <div className='space-y-6'>
         <ProductForm
-          product={mockProduct}
+          product={formatProductForForm(product)}
           onSave={handleSaveProduct}
           onCancel={handleCancelEdit}
           isSaving={isSaving}
@@ -130,16 +172,16 @@ const SellerProductDetailsPage = () => {
           <Button
             variant='ghost'
             size='sm'
-            onClick={() => navigate(ROUTES.DASHBOARD.SELLER_PRODUCTS)}
+            onClick={() => navigate(-1)}
             className='mb-4'>
             <ArrowLeft className='h-4 w-4 mr-2' />
-            Back to Products
+            Back
           </Button>
           <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-white'>
-            Product: {mockProduct.name}
+            {product.name}
           </h1>
           <p className='text-gray-600 dark:text-gray-400'>
-            Product ID: {mockProduct.id} | SKU: {mockProduct.sku}
+            Product ID: {product._id} | SKU: {product.sku}
           </p>
         </div>
         <div className='flex space-x-2'>
@@ -167,7 +209,7 @@ const SellerProductDetailsPage = () => {
               <CardTitle>Product Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <ProductDetails product={mockProduct} />
+              <ProductDetails product={formatProductForForm(product)} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -178,7 +220,9 @@ const SellerProductDetailsPage = () => {
               <CardTitle>Product Images</CardTitle>
             </CardHeader>
             <CardContent>
-              <ProductImages images={mockProduct.images} />
+              <ProductImages
+                images={[...(product.gallery || [])].filter(Boolean)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -189,7 +233,9 @@ const SellerProductDetailsPage = () => {
               <CardTitle>Product Variations</CardTitle>
             </CardHeader>
             <CardContent>
-              <ProductVariations variations={mockProduct.variations} />
+              <ProductVariations
+                variations={product.configurableOptions || []}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -200,7 +246,12 @@ const SellerProductDetailsPage = () => {
               <CardTitle>Product Statistics</CardTitle>
             </CardHeader>
             <CardContent>
-              <ProductStats stats={mockProduct.stats} />
+              <ProductStats
+                views={product.viewCount || 0}
+                likes={product.likes || 0}
+                createdAt={product.createdAt}
+                updatedAt={product.updatedAt}
+              />
             </CardContent>
           </Card>
         </TabsContent>

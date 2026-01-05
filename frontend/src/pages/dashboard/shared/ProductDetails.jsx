@@ -8,8 +8,13 @@ import { Badge } from '../../../components/ui/Badge';
 import { format } from 'date-fns';
 import { Info, Tag, DollarSign, Box, Calendar, FileText } from 'lucide-react';
 import { Separator } from '../../../components/ui/Separator';
+import { formatCurrency } from '../../../lib/utils';
 
 const ProductDetails = ({ product }) => {
+  const renderHTML = (htmlString) => {
+    return { __html: htmlString };
+  };
+
   const details = [
     {
       icon: <Info className='h-4 w-4' />,
@@ -30,10 +35,7 @@ const ProductDetails = ({ product }) => {
     {
       icon: <DollarSign className='h-4 w-4' />,
       label: 'Price',
-      value: new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(product.price),
+      value: formatCurrency(product.price),
     },
     {
       icon: <Box className='h-4 w-4' />,
@@ -48,28 +50,22 @@ const ProductDetails = ({ product }) => {
     {
       icon: <Calendar className='h-4 w-4' />,
       label: 'Created',
-      value: format(new Date(product.createdAt), 'PPpp'),
+      value: product.createdAt
+        ? format(new Date(product.createdAt), 'PPpp')
+        : 'N/A',
     },
     {
       icon: <Calendar className='h-4 w-4' />,
       label: 'Last Updated',
-      value: format(new Date(product.updatedAt), 'PPpp'),
+      value: product.updatedAt
+        ? format(new Date(product.updatedAt), 'PPpp')
+        : 'N/A',
     },
   ];
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-2'>
-          Description
-        </h3>
-        <p className='text-gray-700 dark:text-gray-300'>
-          {product.description || 'No description provided.'}
-        </p>
-      </div>
-
-      <Separator />
-
+      {/* Product Information Section */}
       <div>
         <h3 className='text-lg font-medium mb-4'>Product Information</h3>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -89,6 +85,7 @@ const ProductDetails = ({ product }) => {
         </div>
       </div>
 
+      {/* Additional Metadata Section */}
       {product.metadata && Object.keys(product.metadata).length > 0 && (
         <>
           <Separator />
@@ -114,6 +111,24 @@ const ProductDetails = ({ product }) => {
           </div>
         </>
       )}
+
+      <Separator />
+      {/* Description Section */}
+      <div>
+        <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-2'>
+          Description
+        </h3>
+        {product?.description ? (
+          <div
+            className='prose max-w-none text-gray-700 dark:text-gray-300'
+            dangerouslySetInnerHTML={renderHTML(product.description)}
+          />
+        ) : (
+          <p className='text-gray-700 dark:text-gray-300'>
+            No description provided.
+          </p>
+        )}
+      </div>
     </div>
   );
 };

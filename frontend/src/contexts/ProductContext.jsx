@@ -1,4 +1,10 @@
-import { createContext, useContext, useReducer, useEffect , useCallback} from 'react';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useCallback,
+} from 'react';
 import { productService } from '@/services/product';
 
 const ProductActionTypes = {
@@ -120,9 +126,9 @@ export const ProductProvider = ({ children }) => {
     try {
       dispatch({ type: ProductActionTypes.FETCH_PRODUCTS_START });
 
-			const response = await productService.getProducts(filters, { signal });
-			console.log({response})
-			const products = response.products || response.data?.products || [];
+      const response = await productService.getProducts(filters, { signal });
+      console.log({ response });
+      const products = response.products || response.data?.products || [];
 
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCTS_SUCCESS,
@@ -137,15 +143,15 @@ export const ProductProvider = ({ children }) => {
       });
       throw error;
     }
-	}, []);
-	
+  }, []);
+
   const fetchProduct = useCallback(async (id) => {
     try {
       dispatch({ type: ProductActionTypes.FETCH_PRODUCT_START });
-      const response = await productService.getProduct(id);
+      const response = await productService.getProductById(id);
       dispatch({
         type: ProductActionTypes.FETCH_PRODUCT_SUCCESS,
-        payload: response.data || response,
+        payload: response.product || response,
       });
       return response.data || response;
     } catch (error) {
@@ -218,9 +224,9 @@ export const ProductProvider = ({ children }) => {
     }
   }, []);
 
- const resetProduct = useCallback(() => {
-   dispatch({ type: ProductActionTypes.RESET_PRODUCT });
- }, []);
+  const resetProduct = useCallback(() => {
+    dispatch({ type: ProductActionTypes.RESET_PRODUCT });
+  }, []);
 
   return (
     <ProductContext.Provider

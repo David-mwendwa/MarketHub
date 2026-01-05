@@ -237,10 +237,10 @@ const ProductForm = ({ product, onSave, onCancel, isSaving = false }) => {
         <Button
           variant='ghost'
           size='sm'
-          onClick={() => navigate(ROUTES.DASHBOARD.SELLER_PRODUCTS)}
-          className='text-muted-foreground hover:text-foreground'>
+          onClick={onCancel}
+          className='text-muted-foreground hover:text-foreground border border-transparent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'>
           <ArrowLeft className='h-4 w-4 mr-2' />
-          Back to Products
+          Back
         </Button>
       </div>
 
@@ -1554,7 +1554,7 @@ const ProductForm = ({ product, onSave, onCancel, isSaving = false }) => {
         <div className='flex justify-end space-x-2 pt-4 border-t mt-6'>
           <Button
             variant='outline'
-            onClick={() => navigate(-1)}
+            onClick={onCancel}
             disabled={isLoading}
             type='button'>
             Cancel
