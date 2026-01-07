@@ -30,6 +30,7 @@ import { productsAPI } from '../../lib/api';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { formatCurrency } from '@/lib/utils';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -275,10 +276,6 @@ const ProductDetails = () => {
     }
   };
 
-  // Format price with KSh
-  const formatPrice = (price) => {
-    return `KSh ${Number(price).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  };
 
   // Render star rating
   const renderRating = (rating) => {
@@ -440,11 +437,11 @@ const ProductDetails = () => {
           {/* Price */}
           <div className='flex flex-wrap items-baseline gap-3 mb-6'>
             <span className='text-3xl font-bold text-gray-900 dark:text-white'>
-              {formatPrice(product.price)}
+              {formatCurrency(product.price)}
             </span>
             {product.originalPrice > product.price && (
               <span className='text-lg text-gray-500 dark:text-gray-400 line-through'>
-                {formatPrice(product.originalPrice)}
+                {formatCurrency(product.originalPrice)}
               </span>
             )}
             {product.originalPrice > product.price && (

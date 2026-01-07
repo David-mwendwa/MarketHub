@@ -61,8 +61,8 @@ const SellerProductDetailsPage = () => {
     if (!product) return null;
     return {
       ...product,
-      price: product.price / 100, // Convert from cents to dollars
-      specialPrice: product.specialPrice ? product.specialPrice / 100 : null,
+      price: product.price, // Keep price as is (already in correct units)
+      specialPrice: product.specialPrice || null,
       stock: product.stock?.qty || 0,
       status: product.stock?.status || 'in_stock',
       images: product.gallery || [],
